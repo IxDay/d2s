@@ -44,6 +44,7 @@ func run(c *config.Configuration) error {
 		server.WithHost(c.Host),
 		server.WithPort(c.Port),
 		server.WithErrorHandler(app.ErrorHandler),
+		server.WithNotFoundHandler(app.NotFoundHandler),
 	}
 	if c.Tracer.Enabled {
 		provider, err := telemetry.NewTracerProvider(

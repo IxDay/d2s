@@ -14,6 +14,7 @@ func MiddlewareRecover(next http.Handler) http.Handler {
 		ctx := r.Context()
 		defer xerrors.Recover(func(err error) {
 			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 			log.Ctx(ctx).Error().Ctx(ctx).Stack().Err(err).
 				Msg("recovering from panic!")
 		})
