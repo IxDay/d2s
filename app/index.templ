@@ -5,7 +5,7 @@ import (
 )
 
 templ IndexTplt(wrapped templ.Component) {
-	{{ defer log.FnWrapper(ctx, "index rendering")() }}
+	{{ defer log.FnWrapperCtx(ctx, "index rendering")() }}
 	<div class="min-h-screen">
 		<section class="container mx-auto flex md:px-24 md:py-10 md:flex-row flex-col items-center">
 			<div

@@ -31,6 +31,13 @@ type serverConfig struct {
 	port           int
 	logger         log.Logger
 	tracerProvider *telemetry.TracerProvider
+	errorHandler   func(*Context, error)
+}
+
+func defaultErrorHandler(ctx *Context, err error) {
+	ctx.Logger.Error().Ctx(ctx.Context()).Stack().Err(err).Msg("")
+	ctx.WriteHeader(http.StatusInternalServerError)
+	ctx.ResponseWriter.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 }
 
 func (sc serverConfig) addr() string {
@@ -84,6 +91,13 @@ func WithTracerProvider(provider *telemetry.TracerProvider) ServerOption {
 	})
 }
 
+func WithErrorHandler(handler func(*Context, error)) ServerOption {
+	return ServerOptionFunc(func(sc serverConfig) serverConfig {
+		sc.errorHandler = handler
+		return sc
+	})
+}
+
 func newCache() (*cache.Client, error) {
 	adapter, err := memory.NewAdapter(
 		memory.AdapterWithAlgorithm(memory.LRU),
@@ -108,10 +122,11 @@ func newCache() (*cache.Client, error) {
 
 type (
 	Server struct {
-		server *http.Server
-		cache  *cache.Client
-		router chi.Router
-		logger log.Logger
+		server       *http.Server
+		cache        *cache.Client
+		router       chi.Router
+		logger       log.Logger
+		errorHandler func(*Context, error)
 	}
 )
 
@@ -120,6 +135,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	config := newServerConfig(opts)
 	router := chi.NewRouter()
 	logger := config.logger
+	errorHandler := defaultErrorHandler
 
 	cache, err := newCache()
 	if err != nil {
@@ -136,30 +152,41 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		middlewares = append([]Middleware{tracerMiddleware}, middlewares...)
 	}
 
+	if config.errorHandler != nil {
+		errorHandler = config.errorHandler
+	}
+
 	router.HandleFunc("/live", health.LiveEndpoint)
 	router.HandleFunc("/ready", health.ReadyEndpoint)
 	router.Handle("/metrics", promhttp.Handler())
 
 	return &Server{
-		server: &http.Server{Addr: config.addr(), Handler: router},
-		router: router.Route("/", func(r chi.Router) { r.Use(middlewares...) }),
-		cache: cache,
-		logger: logger,
+		server:       &http.Server{Addr: config.addr(), Handler: router},
+		router:       router.Route("/", func(r chi.Router) { r.Use(middlewares...) }),
+		cache:        cache,
+		logger:       logger,
+		errorHandler: errorHandler,
 	}, nil
 }
 
-func (s *Server) Handle(pattern string, handler http.Handler, opts ...HandlerOption) {
+func (s *Server) Handle(pattern string, handler Handler, opts ...HandlerOption) {
 	config := newHandlerConfig(opts)
+	var handlerStd http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := &Context{Logger: *log.Ctx(r.Context()), Request: r, ResponseWriter: w}
+		if err := handler.Handle(ctx); err != nil {
+			s.errorHandler(ctx, err)
+		}
+	})
 	if config.cache {
-		handler = s.cache.Middleware(handler)
+		handlerStd = s.cache.Middleware(handlerStd)
 	}
-	s.router.Handle(pattern, handler)
+
+	s.router.Handle(pattern, handlerStd)
 }
 
-func (s *Server) HandleFunc(pattern string, handler http.HandlerFunc, opts ...HandlerOption) {
+func (s *Server) HandleFunc(pattern string, handler HandlerFunc, opts ...HandlerOption) {
 	s.Handle(pattern, handler, opts...)
 }
-
 
 func (s *Server) Start() error {
 	errChan := make(chan error)
@@ -215,4 +242,3 @@ var WithCache = HandlerOptionFunc(func(hc handlerConfig) handlerConfig {
 	hc.cache = true
 	return hc
 })
-

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"net/http"
+	"errors"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -43,6 +43,7 @@ func run(c *config.Configuration) error {
 		server.WithLogger(logger),
 		server.WithHost(c.Host),
 		server.WithPort(c.Port),
+		server.WithErrorHandler(app.ErrorHandler),
 	}
 	if c.Tracer.Enabled {
 		provider, err := telemetry.NewTracerProvider(
@@ -59,16 +60,20 @@ func run(c *config.Configuration) error {
 		logger.Fatal().Msg("failed to instanciate server")
 	}
 	srv.HandleFunc("/", app.Index)
-	srv.Handle("/lorem", lorem.Index, server.WithCache)
-	srv.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+	srv.HandleFunc("/lorem", lorem.Index, server.WithCache)
+	srv.HandleFunc("/panic", func(_ *server.Context) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")
 	})
-	srv.HandleFunc("/error", app.Error)
-	srv.HandleFunc("/wait", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("starting wait\n"))
+	srv.HandleFunc("/error", func(ctx *server.Context) error {
+		app.ErrorHandler(ctx, errors.New("something bad happened"))
+		return nil
+	})
+	srv.HandleFunc("/wait", func(ctx *server.Context) error {
+		ctx.ResponseWriter.Write([]byte("starting wait\n"))
 		time.Sleep(10 * time.Second)
-		w.Write([]byte("ending wait\n"))
+		ctx.ResponseWriter.Write([]byte("ending wait\n"))
+		return nil
 	})
 
 	return srv.Start()

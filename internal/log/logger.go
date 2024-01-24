@@ -37,10 +37,17 @@ func (h TracingHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 func Ctx(ctx context.Context) *Logger { return zerolog.Ctx(ctx) }
 func Nop() Logger                     { return zerolog.Nop() }
 
-func FnWrapper(ctx context.Context, msg string) func() {
+func FnWrapperCtx(ctx context.Context, msg string) func() {
 	logger := Ctx(ctx)
 	logger.Debug().Ctx(ctx).Msg("entering " + msg)
 	return func() {
 		logger.Debug().Ctx(ctx).Msg("leaving " + msg)
+	}
+}
+
+func FnWrapper(ctx context.Context, logger zerolog.Logger, name string) func() {
+	logger.Debug().Ctx(ctx).Msg("entering " + name)
+	return func() {
+		logger.Debug().Ctx(ctx).Msg("leaving " + name)
 	}
 }
