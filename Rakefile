@@ -16,8 +16,13 @@ task :"test:editorconfig" do
   sh "ec"
 end
 
+desc "Run vulnerability checks"
+task :"test:vulnerability" do
+  sh "govulncheck ./..."
+end
+
 desc "Run all unit tests"
-task test: %i[test:shellcheck test:editorconfig]
+task test: %i[test:shellcheck test:editorconfig test:vulnerability]
 
 directory "out"
 

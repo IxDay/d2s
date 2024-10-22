@@ -54,11 +54,13 @@ We are actively developing D2S, and here’s a snapshot of what's included and w
 	- [x] Metrics
 	- [x] Tracing
 - [x] Caching
+- [ ] Security
 - [ ] CI/CD
 	- [ ] Image build with caching
 	- [x] Additional file format checks (`editorconfig`, `shellcheck`)
 	- [ ] Unit test
 	- [ ] Integration test?
+	- [x] Vulnerability checking
 
 **Bonus:** Application can be run locally without going through a container.
 This ease the debugging process by simplifying the build phase
@@ -122,6 +124,7 @@ In order to start using this skeleton you will need to install some binaries
 ```sh
 go install github.com/a-h/templ/cmd/templ@v0.2.778
 go install github.com/air-verse/air@latest
+go install golang.org/x/vuln/cmd/govulncheck@latest
 ```
 
 Contributing
