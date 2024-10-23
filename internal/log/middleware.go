@@ -5,32 +5,27 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func handler(logger Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		ctx := r.Context()
 		ww, ok := w.(middleware.WrapResponseWriter)
 		if !ok {
 			ww = middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		}
-		span := trace.SpanFromContext(r.Context())
-		child := logger.With().
-			Str("span_id", span.SpanContext().SpanID().String()).
-			Str("trace_id", span.SpanContext().TraceID().String()).
-			Logger()
-		child.Info().
+		logger.Info().Ctx(ctx).
 			Str("method", r.Method).
 			Str("url", r.URL.Path).
 			Str("user_agent", r.UserAgent()).
 			Msg("starting request")
 
 		if r.ContentLength != 0 {
-			child.Trace().EmbedObject(Request(r)).Msg("dumping request")
+			logger.Trace().Ctx(ctx).EmbedObject(Request(r)).Msg("dumping request")
 		}
-		next.ServeHTTP(ww, r.WithContext(child.WithContext(r.Context())))
-		child.Info().
+		next.ServeHTTP(ww, r.WithContext(logger.WithContext(ctx)))
+		logger.Info().Ctx(ctx).
 			Int("status", ww.Status()).
 			Int("size", ww.BytesWritten()).
 			Dur("elapsed_ms", time.Since(start)).

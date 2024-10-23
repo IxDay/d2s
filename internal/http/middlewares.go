@@ -11,9 +11,11 @@ import (
 
 func MiddlewareRecover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer xerrors.Recover(func(err error) {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Ctx(r.Context()).Error().Stack().Err(err).Msg("recovering from panic!")
+			log.Ctx(ctx).Error().Ctx(ctx).Stack().Err(err).
+				Msg("recovering from panic!")
 		})
 		next.ServeHTTP(w, r)
 	})

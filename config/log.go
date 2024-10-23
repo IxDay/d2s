@@ -22,6 +22,7 @@ func (l Logger) MarshalZerologObject(e *zerolog.Event) {
 var sensibleHeader = map[string]struct{}{"set-cookie": {}, "authorization": {}}
 
 func (t Tracer) MarshalZerologObject(e *zerolog.Event) {
+	e.Bool("enabled", t.Enabled)
 	if t.Endpoint != "" {
 		e.Str("endpoint", t.Endpoint)
 	}

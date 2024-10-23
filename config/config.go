@@ -27,6 +27,7 @@ type (
 	}
 
 	Tracer struct {
+		Enabled  bool
 		Endpoint string
 		Headers  map[string]string
 	}
@@ -68,5 +69,6 @@ func (c Configuration) NewLogger(level zerolog.Level, override bool) zerolog.Log
 	}
 	zerolog.TimeFieldFormat = time.RFC3339Nano
 
-	return zerolog.New(output).Level(level).With().Timestamp().Logger()
+	return zerolog.New(output).Level(level).Hook(log.TracingHook{}).
+		With().Timestamp().Logger()
 }

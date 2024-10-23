@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type (
-	Level  = zerolog.Level
-	Logger = zerolog.Logger
+	Level       = zerolog.Level
+	Logger      = zerolog.Logger
+	TracingHook struct{}
 )
 
 const (
@@ -23,10 +25,14 @@ const (
 	TraceLevel = zerolog.TraceLevel
 )
 
-func Ctx(ctx context.Context) *Logger {
-	return zerolog.Ctx(ctx)
+func (h TracingHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+	span := trace.SpanContextFromContext(e.GetCtx())
+	if !span.TraceID().IsValid() {
+		return
+	}
+	e.Str("span_id", span.SpanID().String())
+	e.Str("trace_id", span.TraceID().String())
 }
 
-func Nop() Logger {
-	return zerolog.Nop()
-}
+func Ctx(ctx context.Context) *Logger { return zerolog.Ctx(ctx) }
+func Nop() Logger                     { return zerolog.Nop() }
