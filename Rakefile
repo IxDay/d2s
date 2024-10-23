@@ -1,4 +1,4 @@
-project = "templ"
+project = "d2s"
 project_dir = File.dirname(__FILE__)
 build_file = :"#{File.join %w[out server]}"
 
@@ -31,6 +31,11 @@ task build: [:generate, build_file]
 
 file build_file => ["main.go", "out"] do |t|
   sh "go build -ldflags '-s -w' -o #{t.name} #{t.prerequisites.first}"
+end
+
+desc "Build the docker image"
+task :"build:image" do
+  sh "#{docker} build -t #{project} ."
 end
 
 desc "Generate template files"

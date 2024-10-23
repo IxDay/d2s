@@ -42,8 +42,8 @@ We are actively developing D2S, and here’s a snapshot of what's included and w
 - [ ] DB operations
 	- [ ] Migrations
 	- [ ] Backup + Restore + Test
-- [ ] Kubernetes ready:
-	- [ ] Containerized
+- [x] Kubernetes ready:
+	- [x] Containerized
 	- [x] Liveness/Readiness probes
 	- [x] Graceful shutdown
 - [x] Monitoring:

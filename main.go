@@ -15,13 +15,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
+var (
 	// DefaultConfigPath is the default location the application will use to
 	// find the configuration.
 	DefaultConfigPath = "d2s.toml"
-)
 
-var (
 	command = &cobra.Command{
 		Use:   "d2s [flags]",
 		Short: ".",

@@ -1,0 +1,9 @@
+*
+!/app/
+/app/**/*_templ.go
+!/internal/
+!/config/
+!go.mod
+!go.sum
+!main.go
+!d2s.example.toml
