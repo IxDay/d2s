@@ -7,6 +7,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+const (
+	expireHeader = "Expires"
+)
+
 func handler(logger Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -27,6 +31,7 @@ func handler(logger Logger, next http.Handler) http.Handler {
 		next.ServeHTTP(ww, r.WithContext(logger.WithContext(ctx)))
 		logger.Info().Ctx(ctx).
 			Int("status", ww.Status()).
+			Bool("cached", ww.Header().Get(expireHeader) != "").
 			Int("size", ww.BytesWritten()).
 			Dur("elapsed_ms", time.Since(start)).
 			Msg("ending request")

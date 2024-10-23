@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	cache "github.com/IxDay/http-cache"
+	"github.com/IxDay/http-cache/adapter/memory"
 	"github.com/go-chi/chi/v5"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/mdobak/go-xerrors"
@@ -24,6 +26,7 @@ import (
 var timeout = 30 * time.Second
 var ErrStarting = xerrors.Message("failed starting")
 var ErrStopping = xerrors.Message("failed stopping")
+var ErrCache = xerrors.Message("failed to initialize cache")
 
 type Middleware = func(http.Handler) http.Handler
 
@@ -112,6 +115,24 @@ func ListenAndServe(opts ...ServerOption) error {
 		cancel()
 		close(errChan)
 	}()
+	memcached, err := memory.NewAdapter(
+		memory.AdapterWithAlgorithm(memory.LRU),
+		memory.AdapterWithCapacity(10000000),
+	)
+	if err != nil {
+		return xerrors.New(ErrCache, err)
+	}
+
+	cacheClient, err := cache.NewClient(
+		cache.ClientWithAdapter(memcached),
+		cache.ClientWithTTL(10*time.Minute),
+		cache.ClientWithRefreshKey("opn"),
+		cache.ClientWithExpiresHeader(),
+		cache.ClientWithVary("Hx-Request"),
+	)
+	if err != nil {
+		return xerrors.New(ErrCache, err)
+	}
 	router.HandleFunc("/live", health.LiveEndpoint)
 	router.HandleFunc("/ready", health.ReadyEndpoint)
 	router.Handle("/metrics", promhttp.Handler())
@@ -119,7 +140,7 @@ func ListenAndServe(opts ...ServerOption) error {
 	router.Route("/", func(r chi.Router) {
 		r.Use(middlewares...)
 		r.HandleFunc("/", app.Index)
-		r.HandleFunc("/lorem", lorem.Index)
+		r.Handle("/lorem", cacheClient.Middleware(lorem.Index))
 		r.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
 			// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 			panic("some unknown reason")

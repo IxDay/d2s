@@ -3,6 +3,7 @@ module github.com/platipy-io/d2s
 go 1.22.2
 
 require (
+	github.com/IxDay/http-cache v0.0.0-20241023144724-63962ba79e1d
 	github.com/a-h/templ v0.2.778
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
@@ -47,6 +48,7 @@ require (
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/victorspringer/http-cache v0.0.0-20240523143319-7d9f48f8ab91 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.30.0 // indirect
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
