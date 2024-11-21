@@ -119,13 +119,10 @@ The internal directory is currently too large and will need to be broken down in
 Getting started
 ---------------
 
-In order to start using this skeleton you will need to install some binaries
+In order to start using this skeleton you will need to follow a few steps
 
-```sh
-go install github.com/a-h/templ/cmd/templ@v0.2.778
-go install github.com/air-verse/air@latest
-go install golang.org/x/vuln/cmd/govulncheck@latest
-```
+- Install `mruby`, `mrake` binaries in your `$PATH` ([repository link](https://github.com/IxDay/mruby)).
+- Run `mrake setup` to install the remaining dependencies.
 
 Contributing
 ------------
