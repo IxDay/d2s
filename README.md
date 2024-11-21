@@ -70,7 +70,7 @@ This ease the debugging process by simplifying the build phase
 Design Decisions
 ----------------
 
-We believe that transparency in technology choices is crucial. 
+We believe that transparency in technology choices is crucial.
 Here’s why we opted for each key component:
 
 ### Base technologies
@@ -85,12 +85,12 @@ Here’s why we opted for each key component:
 While the structure is not final, some decisions have already been made.
 The following artifacts influenced these decisions: [this documentation entry][layout_doc] and [this issue][layout_issue].
 
-Since the main entry point is the launch of the server binary, a `main.go` file is located at the root of this repository. 
-It also includes a configuration example (`d2s.example.toml`), 
+Since the main entry point is the launch of the server binary, a `main.go` file is located at the root of this repository.
+It also includes a configuration example (`d2s.example.toml`),
 which can be copied and will be loaded by default if name is `d2s.toml`.
 
-The app directory follows a structure inspired by the Pages Router from Next.js. 
-Though it lacks the hidden logic of Next.js, this layout is a pragmatic way to 
+The app directory follows a structure inspired by the Pages Router from Next.js.
+Though it lacks the hidden logic of Next.js, this layout is a pragmatic way to
 represent the website's arborescence in the file system.
 
 The internal directory is currently too large and will need to be broken down into smaller parts.
@@ -103,7 +103,7 @@ The internal directory is currently too large and will need to be broken down in
 
 *What about Slog and Zap?*
 
-#### Chi 
+#### Chi
 
 #### Opentelemetry
 
@@ -127,7 +127,7 @@ In order to start using this skeleton you will need to follow a few steps
 Contributing
 ------------
 
-Contributions are welcome! Please check out the roadmap and open issues if you want to get involved, 
+Contributions are welcome! Please check out the roadmap and open issues if you want to get involved,
 and feel free to submit PRs.
 
 License
