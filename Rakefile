@@ -53,6 +53,11 @@ end
 desc "Clean up generated files"
 task :clean do
   walk("out") do |entry|
+    puts "rm #{entry}"
     File.directory?(entry) ? Dir.delete(entry) : File.delete(entry)
+  end
+  Dir.glob("**/*_templ.go") do |entry|
+    puts "rm #{entry}"
+    File.delete(entry)
   end
 end
