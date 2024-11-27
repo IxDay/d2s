@@ -17,15 +17,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
-	"github.com/platipy-io/d2s/app"
-	"github.com/platipy-io/d2s/app/lorem"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
 )
 
 var timeout = 30 * time.Second
-var ErrStarting = xerrors.Message("failed starting")
-var ErrStopping = xerrors.Message("failed stopping")
 var ErrCache = xerrors.Message("failed to initialize cache")
 
 type Middleware = func(http.Handler) http.Handler
@@ -88,13 +84,48 @@ func WithTracerProvider(provider *telemetry.TracerProvider) ServerOption {
 	})
 }
 
-func ListenAndServe(opts ...ServerOption) error {
-	router := chi.NewRouter()
-	errChan := make(chan error)
+func newCache() (*cache.Client, error) {
+	adapter, err := memory.NewAdapter(
+		memory.AdapterWithAlgorithm(memory.LRU),
+		memory.AdapterWithCapacity(10000000),
+	)
+	if err != nil {
+		return nil, xerrors.New(ErrCache, err)
+	}
+
+	client, err := cache.NewClient(
+		cache.ClientWithAdapter(adapter),
+		cache.ClientWithTTL(10*time.Minute),
+		cache.ClientWithRefreshKey("opn"),
+		cache.ClientWithExpiresHeader(),
+		cache.ClientWithVary("Hx-Request"),
+	)
+	if err != nil {
+		return nil, xerrors.New(ErrCache, err)
+	}
+	return client, nil
+}
+
+type (
+	Server struct {
+		server *http.Server
+		cache  *cache.Client
+		router chi.Router
+		logger log.Logger
+	}
+)
+
+func NewServer(opts ...ServerOption) (*Server, error) {
 	health := healthcheck.NewHandler()
 	config := newServerConfig(opts)
+	router := chi.NewRouter()
 	logger := config.logger
-	server := http.Server{Addr: config.addr(), Handler: router}
+
+	cache, err := newCache()
+	if err != nil {
+		return nil, err
+	}
+
 	middlewares := []Middleware{MiddlewareMetrics, MiddlewareLogger(logger), MiddlewareRecover}
 
 	if config.tracerProvider != nil {
@@ -105,60 +136,83 @@ func ListenAndServe(opts ...ServerOption) error {
 		middlewares = append([]Middleware{tracerMiddleware}, middlewares...)
 	}
 
-	go func() {
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
-		<-sigint
-		logger.Info().Msg("received interrupt, closing server...")
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		errChan <- xerrors.New(server.Shutdown(ctx))
-		cancel()
-		close(errChan)
-	}()
-	memcached, err := memory.NewAdapter(
-		memory.AdapterWithAlgorithm(memory.LRU),
-		memory.AdapterWithCapacity(10000000),
-	)
-	if err != nil {
-		return xerrors.New(ErrCache, err)
-	}
-
-	cacheClient, err := cache.NewClient(
-		cache.ClientWithAdapter(memcached),
-		cache.ClientWithTTL(10*time.Minute),
-		cache.ClientWithRefreshKey("opn"),
-		cache.ClientWithExpiresHeader(),
-		cache.ClientWithVary("Hx-Request"),
-	)
-	if err != nil {
-		return xerrors.New(ErrCache, err)
-	}
 	router.HandleFunc("/live", health.LiveEndpoint)
 	router.HandleFunc("/ready", health.ReadyEndpoint)
 	router.Handle("/metrics", promhttp.Handler())
 
-	router.Route("/", func(r chi.Router) {
-		r.Use(middlewares...)
-		r.HandleFunc("/", app.Index)
-		r.Handle("/lorem", cacheClient.Middleware(lorem.Index))
-		r.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
-			// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
-			panic("some unknown reason")
-		})
-		r.HandleFunc("/wait", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("starting wait\n"))
-			time.Sleep(10 * time.Second)
-			w.Write([]byte("ending wait\n"))
-		})
-	})
+	return &Server{
+		server: &http.Server{Addr: config.addr(), Handler: router},
+		router: router.Route("/", func(r chi.Router) { r.Use(middlewares...) }),
+		cache: cache,
+		logger: logger,
+	}, nil
+}
 
-	logger.Info().Msg("starting server on: " + server.Addr)
-	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		return xerrors.New(ErrStarting, err)
+func (s *Server) Handle(pattern string, handler http.Handler, opts ...HandlerOption) {
+	config := newHandlerConfig(opts)
+	if config.cache {
+		handler = s.cache.Middleware(handler)
 	}
-	if err := xerrors.WithWrapper(ErrStopping, <-errChan); err != nil {
+	s.router.Handle(pattern, handler)
+}
+
+func (s *Server) HandleFunc(pattern string, handler http.HandlerFunc, opts ...HandlerOption) {
+	s.Handle(pattern, handler, opts...)
+}
+
+
+func (s *Server) Start() error {
+	errChan := make(chan error)
+
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
+		s.logger.Info().Msg("received interrupt, closing server...")
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		errChan <- xerrors.New(s.server.Shutdown(ctx))
+		cancel()
+		close(errChan)
+	}()
+	s.logger.Info().Msg("starting server on: " + s.server.Addr)
+	err := s.server.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		s.logger.Err(err).Msg("failed to start server")
 		return err
 	}
-	logger.Info().Msg("server stopped properly")
+	if err := <-errChan; err != nil {
+		s.logger.Err(err).Msg("failed to stop server")
+		return err
+	}
+	s.logger.Info().Msg("server stopped properly")
 	return nil
 }
+
+type handlerConfig struct {
+	cache bool
+}
+
+// ServerOption applies a configuration option value to a Server.
+type HandlerOption interface {
+	apply(handlerConfig) handlerConfig
+}
+
+type HandlerOptionFunc func(handlerConfig) handlerConfig
+
+func (fn HandlerOptionFunc) apply(c handlerConfig) handlerConfig {
+	return fn(c)
+}
+
+func newHandlerConfig(opts []HandlerOption) handlerConfig {
+	hc := handlerConfig{}
+	for _, opt := range opts {
+		hc = opt.apply(hc)
+	}
+	return hc
+}
+
+var WithCache = HandlerOptionFunc(func(hc handlerConfig) handlerConfig {
+	hc.cache = true
+	return hc
+})
+

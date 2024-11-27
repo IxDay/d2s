@@ -1,10 +1,13 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
+	"time"
+	"net/http"
 
+	"github.com/platipy-io/d2s/app"
+	"github.com/platipy-io/d2s/app/lorem"
 	"github.com/platipy-io/d2s/config"
 	"github.com/platipy-io/d2s/server"
 	"github.com/platipy-io/d2s/internal/log"
@@ -26,6 +29,7 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// https://github.com/spf13/cobra/issues/340
 			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
 			return run()
 		},
 	}
@@ -76,11 +80,22 @@ func run() error {
 		opts = append(opts, server.WithTracerProvider(provider))
 	}
 
-	err = server.ListenAndServe(opts...)
-	if errors.Is(err, server.ErrStopping) {
-		logger.Error().Msg("failed to stop server")
-	} else if errors.Is(err, server.ErrStarting) {
-		logger.Fatal().Msg("failed to start server")
+	srv, err := server.NewServer(opts...)
+	if err != nil {
+		logger.Fatal().Msg("failed to instanciate server")
 	}
-	return err
+	srv.HandleFunc("/", app.Index)
+	srv.Handle("/lorem", lorem.Index, server.WithCache)
+	srv.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
+		panic("some unknown reason")
+	})
+	srv.HandleFunc("/wait", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("starting wait\n"))
+		time.Sleep(10 * time.Second)
+		w.Write([]byte("ending wait\n"))
+	})
+
+
+	return srv.Start()
 }
