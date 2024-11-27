@@ -7,6 +7,7 @@ import (
 	"github.com/mdobak/go-xerrors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -74,6 +75,8 @@ func NewTracerProvider(name string, opts ...TracerOption) (*TracerProvider, erro
 
 	// set as global to let NewSpan catch it
 	otel.SetTracerProvider(provider)
+	// https://github.com/open-telemetry/opentelemetry-go-contrib/blob/31fe1e4559491449920a9eedd640aa7b6dce7086/instrumentation/net/http/httptrace/otelhttptrace/example/client/client.go#L43
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}))
 
 	return provider, nil
 }
