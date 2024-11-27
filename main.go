@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/platipy-io/d2s/config"
-	"github.com/platipy-io/d2s/internal/http"
+	"github.com/platipy-io/d2s/server"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
 
@@ -67,19 +67,19 @@ func run() error {
 	logger := conf.NewLogger(logLevel.Level, logLevelFlag.Changed)
 	logger.Debug().Object("config", conf).Msg("dumping config")
 
-	opts := []http.ServerOption{http.WithLogger(logger), http.WithHost(conf.Host), http.WithPort(conf.Port)}
+	opts := []server.ServerOption{server.WithLogger(logger), server.WithHost(conf.Host), server.WithPort(conf.Port)}
 	if conf.Tracer.Enabled {
 		provider, err := telemetry.NewTracerProvider("d2s", conf.Tracer.Opts()...)
 		if err != nil {
 			return err
 		}
-		opts = append(opts, http.WithTracerProvider(provider))
+		opts = append(opts, server.WithTracerProvider(provider))
 	}
 
-	err = http.ListenAndServe(opts...)
-	if errors.Is(err, http.ErrStopping) {
+	err = server.ListenAndServe(opts...)
+	if errors.Is(err, server.ErrStopping) {
 		logger.Error().Msg("failed to stop server")
-	} else if errors.Is(err, http.ErrStarting) {
+	} else if errors.Is(err, server.ErrStarting) {
 		logger.Fatal().Msg("failed to start server")
 	}
 	return err
