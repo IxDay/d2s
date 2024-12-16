@@ -7,7 +7,7 @@ import (
 )
 
 func (c Configuration) MarshalZerologObject(e *zerolog.Event) {
-	e.Bool("dev", c.Dev)
+	e.Bool("dev", bool(c.Dev))
 	e.Str("host", c.Host)
 	e.Int("port", c.Port)
 
@@ -16,7 +16,7 @@ func (c Configuration) MarshalZerologObject(e *zerolog.Event) {
 }
 
 func (l Logger) MarshalZerologObject(e *zerolog.Event) {
-	e.Str("level", l.Level)
+	e.Str("level", l.LogLevel.String())
 }
 
 var sensibleHeader = map[string]struct{}{"set-cookie": {}, "authorization": {}}

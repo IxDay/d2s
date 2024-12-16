@@ -107,7 +107,7 @@ The internal directory is currently too large and will need to be broken down in
 
 #### Opentelemetry
 
-#### Viper + Cobra
+#### Kong
 
 #### Prometheus
 
