@@ -2,20 +2,9 @@ project = "d2s"
 project_dir = File.dirname(__FILE__)
 build_file = :"#{File.join %w[out server]}"
 
-deps = %w[
-  github.com/a-h/templ/cmd/templ@v0.2.778
-  github.com/air-verse/air@latest
-  golang.org/x/vuln/cmd/govulncheck@latest
-]
-
 docker = ENV["DOCKER"] || "docker"
 
 task default: [:build]
-
-desc "Run shellcheck against shell files"
-task :"test:shellcheck" do
-  sh "shellcheck .envrc"
-end
 
 desc "Run editorconfig checks"
 task :"test:editorconfig" do
@@ -28,7 +17,7 @@ task :"test:vulnerability" do
 end
 
 desc "Run all unit tests"
-task test: %i[test:shellcheck test:editorconfig test:vulnerability]
+task test: %i[test:editorconfig test:vulnerability]
 
 directory "out"
 
@@ -65,28 +54,5 @@ task :clean do
   Dir.glob("**/*_templ.go") do |entry|
     puts "rm #{entry}"
     File.delete(entry)
-  end
-end
-
-desc "Setup the environment"
-task :setup do
-  ask_validation 'GOPATH is not set, dependency will be installed in the default go location' if !ENV['GOPATH']
-  deps.each do |dep|
-    cmd = dep.split('@').first.split('/').last
-    sh "go install #{dep}" if !has? cmd
-  end
-end
-
-def ask_validation(msg)
-  puts 'WARN: '.yellow + msg + '. Proceed [y/n]?'
-  loop do
-    case (gets.chomp.downcase)
-    when 'y', 'ye', 'yes'
-     return
-    when 'n', 'no'
-     exit(1)
-    else
-     puts 'I didn\'t get your choice...'
-    end
   end
 end

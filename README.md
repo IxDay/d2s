@@ -119,10 +119,10 @@ The internal directory is currently too large and will need to be broken down in
 Getting started
 ---------------
 
-In order to start using this skeleton you will need to follow a few steps
-
-- Install `mruby`, `mrake` binaries in your `$PATH` ([repository link](https://github.com/IxDay/mruby)).
-- Run `mrake setup` to install the remaining dependencies.
+In order to start using this skeleton you need to install [mise][mise],
+once done just run `mise install` to get all the necessary tools.
+Now you can trigger tasks from the [Rakefile][rakefile], such as `mrake watch` to
+start the development environment with automatic reload.
 
 Contributing
 ------------
@@ -139,3 +139,5 @@ This project is licensed under the MIT License.
 [layout_doc]: https://go.dev/doc/modules/layout
 [layout_issue]: https://github.com/golang-standards/project-layout/issues/117
 [nextjs_pages_router]: https://nextjs.org/docs/pages/building-your-application/routing/pages-and-layouts
+[mise]: https://mise.jdx.dev
+[rakefile]: ./Rakefile
