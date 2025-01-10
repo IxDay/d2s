@@ -24,7 +24,7 @@ directory "out"
 desc "Build the binary of the project"
 task build: [:generate, build_file]
 
-file build_file => ["main.go", "out"] do |t|
+file build_file => ["main.go", "out", "_templ.go"] do |t|
   sh "go build -ldflags '-s -w' -o #{t.name} #{t.prerequisites.first}"
 end
 
