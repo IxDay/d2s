@@ -2,3 +2,4 @@
 /out
 /*.toml
 /!d2s.example.toml
+/data/d2s.db

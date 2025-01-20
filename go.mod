@@ -6,6 +6,7 @@ require (
 	github.com/IxDay/http-cache v0.0.0-20241023144724-63962ba79e1d
 	github.com/a-h/templ v0.2.793
 	github.com/alecthomas/kong v1.6.0
+	github.com/bokwoon95/sq v0.5.1
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/mdobak/go-xerrors v0.3.1
