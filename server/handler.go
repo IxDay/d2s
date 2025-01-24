@@ -15,6 +15,10 @@ type Context struct {
 	http.ResponseWriter
 }
 
+func NewContext(w http.ResponseWriter, r *http.Request) *Context {
+	return &Context{Logger: *log.Ctx(r.Context()), Request: r, ResponseWriter: w}
+}
+
 func (c *Context) NewSpan(name string) trace.Span {
 	ctx, span := telemetry.NewSpan(c.Context(), name)
 	c.Request = c.Request.WithContext(ctx)

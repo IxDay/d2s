@@ -27,17 +27,24 @@ var ErrCache = xerrors.Message("failed to initialize cache")
 type Middleware = func(http.Handler) http.Handler
 
 type serverConfig struct {
-	host           string
-	port           int
-	logger         log.Logger
-	tracerProvider *telemetry.TracerProvider
-	errorHandler   func(*Context, error)
+	host            string
+	port            int
+	logger          log.Logger
+	tracerProvider  *telemetry.TracerProvider
+	errorHandler    func(*Context, error)
+	notFoundHandler func(*Context)
 }
 
 func defaultErrorHandler(ctx *Context, err error) {
-	ctx.Logger.Error().Ctx(ctx.Context()).Stack().Err(err).Msg("")
+	ctx.Logger.Error().Ctx(ctx.Context()).Stack().Err(err).Msg("handling error")
 	ctx.WriteHeader(http.StatusInternalServerError)
 	ctx.ResponseWriter.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+}
+
+func defaultNotFoundHandler(ctx *Context) {
+	ctx.Logger.Warn().Ctx(ctx.Context()).Msg("page not found")
+	ctx.WriteHeader(http.StatusNotFound)
+	ctx.ResponseWriter.Write([]byte(http.StatusText(http.StatusNotFound)))
 }
 
 func (sc serverConfig) addr() string {
@@ -98,6 +105,13 @@ func WithErrorHandler(handler func(*Context, error)) ServerOption {
 	})
 }
 
+func WithNotFoundHandler(handler func(*Context)) ServerOption {
+	return ServerOptionFunc(func(sc serverConfig) serverConfig {
+		sc.notFoundHandler = handler
+		return sc
+	})
+}
+
 func newCache() (*cache.Client, error) {
 	adapter, err := memory.NewAdapter(
 		memory.AdapterWithAlgorithm(memory.LRU),
@@ -136,6 +150,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	router := chi.NewRouter()
 	logger := config.logger
 	errorHandler := defaultErrorHandler
+	notFoundHandler := defaultNotFoundHandler
 
 	cache, err := newCache()
 	if err != nil {
@@ -156,9 +171,18 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		errorHandler = config.errorHandler
 	}
 
+	if config.notFoundHandler != nil {
+		notFoundHandler = config.notFoundHandler
+	}
+
 	router.HandleFunc("/live", health.LiveEndpoint)
 	router.HandleFunc("/ready", health.ReadyEndpoint)
 	router.Handle("/metrics", promhttp.Handler())
+	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		ctx := NewContext(w, r)
+		notFoundHandler(ctx)
+		defer xerrors.Recover(func(err error) { errorHandler(ctx, err) })
+	})
 
 	return &Server{
 		server:       &http.Server{Addr: config.addr(), Handler: router},
@@ -173,6 +197,7 @@ func (s *Server) Handle(pattern string, handler Handler, opts ...HandlerOption) 
 	config := newHandlerConfig(opts)
 	var handlerStd http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := &Context{Logger: *log.Ctx(r.Context()), Request: r, ResponseWriter: w}
+		defer xerrors.Recover(func(err error) { s.errorHandler(ctx, err) })
 		if err := handler.Handle(ctx); err != nil {
 			s.errorHandler(ctx, err)
 		}
