@@ -14,3 +14,12 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	component := BaseTplt(IndexTplt(nil))
 	component.Render(ctx, w)
 }
+
+func Error(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(500)
+	component := ErrorTplt(500, "Something bad happened")
+	if _, ok := r.Header["Hx-Request"]; !ok {
+		component = BaseTplt(component)
+	}
+	component.Render(r.Context(), w)
+}

@@ -9,11 +9,20 @@ templ BaseTplt(body templ.Component) {
 		<title>Hello, World!</title>
 		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
 		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			function handleError(that, evt) {
+				if (!evt.detail.isError) return;
+				var div = document.createElement("div");
+				that.replaceChildren(div);
+				evt.detail.shouldSwap = true;
+				evt.detail.target = div;
+			}
+		</script>
 	</head>
 	<body>
 		/* https://www.creative-tim.com/twcomponents/component/wireframe */
 		@header()
-		<main class="bg-slate-50">@body</main>
+		<main class="bg-slate-50" hx-on::before-swap="handleError(this, event)">@body</main>
 	</body>
 	</html>
 }

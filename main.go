@@ -64,6 +64,7 @@ func run(c *config.Configuration) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")
 	})
+	srv.HandleFunc("/error", app.Error)
 	srv.HandleFunc("/wait", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("starting wait\n"))
 		time.Sleep(10 * time.Second)
