@@ -1,19 +1,15 @@
 package lorem
 
 import (
-	"net/http"
-
 	"github.com/platipy-io/d2s/app"
-	"github.com/platipy-io/d2s/internal/log"
+	"github.com/platipy-io/d2s/server"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
-	defer log.FnWrapper(r.Context(), "lorem endpoint")()
+func Index(ctx *server.Context) error {
+	defer ctx.LogWrapper("lorem endpoint")()
 	component := IndexTplt()
-	if _, ok := r.Header["Hx-Request"]; !ok {
+	if _, ok := ctx.Request.Header["Hx-Request"]; !ok {
 		component = app.BaseTplt(app.IndexTplt(component))
 	}
-	component.Render(r.Context(), w)
+	return ctx.Render(component)
 }
-
-var Index = http.HandlerFunc(index)

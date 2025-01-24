@@ -3,20 +3,17 @@ package propagate
 import (
 	"net/http"
 
-	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
+	"github.com/platipy-io/d2s/server"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
-	defer log.FnWrapper(r.Context(), "propagate endpoint")()
-	logger := log.Ctx(r.Context())
+func Index(ctx *server.Context) error {
+	defer ctx.LogWrapper("propagate endpoint")()
 	url := "http://localhost:8081"
-	req, _ := http.NewRequestWithContext(r.Context(), http.MethodGet, url, nil)
+	req, _ := http.NewRequestWithContext(ctx.Context(), http.MethodGet, url, nil)
 	_, err := telemetry.HTTPClient.Do(req)
 	if err != nil {
-		logger.Err(err).Msg("failed to send http request")
+		ctx.Err(err).Msg("failed to send http request")
 	}
-
+	return nil
 }
-
-var Index = http.HandlerFunc(index)
