@@ -13,6 +13,7 @@ func (c Configuration) MarshalZerologObject(e *zerolog.Event) {
 
 	e.Object("logger", c.Logger)
 	e.Object("tracer", c.Tracer)
+	e.Object("authentications", c.Authentications)
 }
 
 func (l Logger) MarshalZerologObject(e *zerolog.Event) {
@@ -36,5 +37,20 @@ func (t Tracer) MarshalZerologObject(e *zerolog.Event) {
 			dict.Str(k, v)
 		}
 		e.Dict("headers", dict)
+	}
+}
+
+func (a Authentications) MarshalZerologObject(e *zerolog.Event) {
+	e.Object("github", a.Github)
+}
+
+func (g Github) MarshalZerologObject(e *zerolog.Event) {
+	e.Bool("enabled", g.Enabled)
+	e.Str("redirect", g.Redirect)
+	e.Str("client-id", g.ClientID)
+	if g.ClientSecret != "" {
+		e.Str("client-secret", "*****")
+	} else {
+		e.Str("client-secret", "<unset>")
 	}
 }

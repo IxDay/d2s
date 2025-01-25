@@ -11,6 +11,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"github.com/rs/zerolog"
 
+	"github.com/platipy-io/d2s/internal/github"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
 )
@@ -18,12 +19,13 @@ import (
 type (
 	// Configuration hold the current fields to tune the application
 	Configuration struct {
-		Dev     Dev     `kong:"help='Activate dev mode',env='DEV'"`
-		Configs Configs `kong:"help='Path to a configuration file (can be repeated)',name='config',sep='none',type='path'" toml:"-"`
-		Host    string  `kong:"help='Host to listen to'"`
-		Port    int     `kong:"help='Port to listen to',default='8080'"`
-		Logger  `kong:"embed=''" toml:"logger"`
-		Tracer  `kong:"-" toml:"tracer"`
+		Dev             Dev     `kong:"help='Activate dev mode',env='DEV'"`
+		Configs         Configs `kong:"help='Path to a configuration file (can be repeated)',name='config',sep='none',type='path'" toml:"-"`
+		Host            string  `kong:"help='Host to listen to'"`
+		Port            int     `kong:"help='Port to listen to',default='8080'"`
+		Logger          `kong:"embed=''" toml:"logger"`
+		Tracer          `kong:"-" toml:"tracer"`
+		Authentications `kong:"-" toml:"authentications"`
 	}
 
 	Configs []string
@@ -40,6 +42,16 @@ type (
 	}
 	Level struct {
 		zerolog.Level
+	}
+
+	Authentications struct {
+		Github `toml:"github"`
+	}
+	Github struct {
+		Enabled      bool
+		Redirect     string
+		ClientID     string `toml:"client-id"`
+		ClientSecret string `toml:"client-secret"`
 	}
 )
 
@@ -108,4 +120,8 @@ func (c Configuration) NewLogger() zerolog.Logger {
 
 	return zerolog.New(output).Level(level).Hook(log.TracingHook{}).
 		With().Timestamp().Logger()
+}
+
+func (g Github) InitOAuth() {
+	github.InitOAuth(g.Redirect, g.ClientID, g.ClientSecret)
 }

@@ -36,6 +36,7 @@ func main() {
 }
 
 func run(c *config.Configuration) error {
+	c.InitOAuth()
 	logger := c.NewLogger()
 	logger.Debug().Object("config", c).Msg("dumping config")
 
@@ -66,6 +67,8 @@ func run(c *config.Configuration) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")
 	})
+	srv.HandleFunc("/auth/login", app.Login)
+	srv.HandleFunc("/auth/callback", app.Callback)
 	srv.HandleFunc("/error", func(ctx *server.Context) error {
 		app.ErrorHandler(ctx, errors.New("something bad happened"))
 		return nil

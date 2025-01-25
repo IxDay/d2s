@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/platipy-io/d2s/internal/log"
@@ -27,6 +28,15 @@ func (c *Context) NewSpan(name string) trace.Span {
 
 func (c *Context) LogWrapper(name string) func() {
 	return log.FnWrapper(c.Context(), c.Logger, name)
+}
+
+func (c *Context) Redirect(url string, code int) {
+	http.Redirect(c.ResponseWriter, c.Request, url, code)
+}
+
+func (c *Context) SetCookie(name, value string, duration time.Duration) {
+	cookie := http.Cookie{Name: name, Value: value, Expires: time.Now().Add(duration)}
+	http.SetCookie(c.ResponseWriter, &cookie)
 }
 
 func (c *Context) Render(component templ.Component) error {
