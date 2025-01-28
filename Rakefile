@@ -45,6 +45,11 @@ task :watch do
   sh "air --build.bin #{build_file} --tmp_dir #{File.dirname(build_file.to_s)}"
 end
 
+desc "Serve godoc (localhost:6060)"
+task :doc do
+  sh "godoc -http=localhost:6060 -play -index -v"
+end
+
 desc "Clean up generated files"
 task :clean do
   walk("out") do |entry|
