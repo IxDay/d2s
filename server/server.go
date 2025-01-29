@@ -149,15 +149,20 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	config := newServerConfig(opts)
 	router := chi.NewRouter()
 	logger := config.logger
-	errorHandler := defaultErrorHandler
 	notFoundHandler := defaultNotFoundHandler
+
+	errorHandler := defaultErrorHandler
+	if config.errorHandler != nil {
+		errorHandler = config.errorHandler
+	}
 
 	cache, err := newCache()
 	if err != nil {
 		return nil, err
 	}
 
-	middlewares := []Middleware{MiddlewareMetrics, MiddlewareLogger(logger), MiddlewareRecover}
+	middlewares := []Middleware{MiddlewareUser(errorHandler),
+		MiddlewareMetrics, MiddlewareLogger(logger), MiddlewareRecover}
 
 	if config.tracerProvider != nil {
 		tracerMiddleware := MiddlewareOpenTelemetry("server",
@@ -165,10 +170,6 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		endpoint := config.tracerProvider.Endpoint()
 		health.AddReadinessCheck("tracer", healthcheck.TCPDialCheck(endpoint, 5*time.Second))
 		middlewares = append([]Middleware{tracerMiddleware}, middlewares...)
-	}
-
-	if config.errorHandler != nil {
-		errorHandler = config.errorHandler
 	}
 
 	if config.notFoundHandler != nil {
@@ -196,7 +197,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 func (s *Server) Handle(pattern string, handler Handler, opts ...HandlerOption) {
 	config := newHandlerConfig(opts)
 	var handlerStd http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := &Context{Logger: *log.Ctx(r.Context()), Request: r, ResponseWriter: w}
+		ctx := NewContext(w, r)
 		defer xerrors.Recover(func(err error) { s.errorHandler(ctx, err) })
 		if err := handler.Handle(ctx); err != nil {
 			s.errorHandler(ctx, err)

@@ -2,9 +2,10 @@ package app
 
 import (
 	"github.com/platipy-io/d2s/internal/log"
+	"github.com/platipy-io/d2s/server"
 )
 
-templ IndexTplt(wrapped templ.Component) {
+templ IndexTplt(context *server.Context, wrapped templ.Component) {
 	{{ defer log.FnWrapperCtx(ctx, "index rendering")() }}
 	<div class="min-h-screen">
 		<section class="container mx-auto flex md:px-24 md:py-10 md:flex-row flex-col items-center">
@@ -24,6 +25,12 @@ templ IndexTplt(wrapped templ.Component) {
 						<a hx-get="/error" hx-push-url="true" hx-swap="outerHTML"  hx-target="#wrapped"
 							href="/error" class="inline-flex rounded-sm h-11 w-[8rem] ml-4 px-4 bg-orange-200 hover:bg-orange-300"></a>
 					</div>
+					if context.User == nil {
+						<div class="mt-4">
+							<a href="/auth/login" class="inline-flex rounded-sm h-11 w-[8rem] px-4 bg-slate-600 hover:bg-slate-700"></a>
+						</div>
+					}
+
 				}
 			</div>
 			<div class="lg:max-w-lg lg:w-full mb-5 md:mb-0 md:w-1/2 w-3/6 h-[32rem] bg-gray-200 rounded-md"></div>

@@ -10,7 +10,7 @@ func Index(ctx *server.Context) error {
 	span := ctx.NewSpan("index")
 	defer span.End()
 	defer ctx.LogWrapper("index endpoint")()
-	return ctx.Render(BaseTplt(IndexTplt(nil)))
+	return ctx.Render(BaseTplt(ctx, IndexTplt(ctx, nil)))
 }
 
 type HTTPError struct {
@@ -25,7 +25,7 @@ func (he HTTPError) Render(ctx *server.Context) {
 	ctx.WriteHeader(he.Code)
 	component := ErrorTplt(he)
 	if _, ok := ctx.Request.Header["Hx-Request"]; !ok {
-		component = BaseTplt(component)
+		component = BaseTplt(ctx, component)
 	}
 	if err := ctx.Render(component); err != nil {
 		ctx.Logger.Error().Ctx(ctx.Context()).Stack().Err(err).Msg("failed rendering template")

@@ -9,7 +9,7 @@ func Index(ctx *server.Context) error {
 	defer ctx.LogWrapper("lorem endpoint")()
 	component := IndexTplt()
 	if _, ok := ctx.Request.Header["Hx-Request"]; !ok {
-		component = app.BaseTplt(app.IndexTplt(component))
+		component = app.BaseTplt(ctx, app.IndexTplt(ctx, nil))
 	}
 	return ctx.Render(component)
 }

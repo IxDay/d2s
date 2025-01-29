@@ -1,6 +1,8 @@
 package app
 
-templ BaseTplt(body templ.Component) {
+import "github.com/platipy-io/d2s/server"
+
+templ BaseTplt(context *server.Context, body templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -21,14 +23,14 @@ templ BaseTplt(body templ.Component) {
 	</head>
 	<body>
 		/* https://www.creative-tim.com/twcomponents/component/wireframe */
-		@header()
+		@header(context)
 		<main class="bg-slate-50" hx-on::before-swap="handleError(this, event)">@body</main>
 	</body>
 	</html>
 }
 
 
-templ header() {
+templ header(context *server.Context) {
 	<header class="shadow-sm">
 		<div class="bg-blue-300 py-1"></div>
 		<nav class="flex items-center justify-between flex-wrap bg-white py-4 mx-auto px-8">
@@ -65,12 +67,12 @@ templ header() {
 							<div class="h-2 bg-gray-400 w-16 mt-2 block mx-auto rounded-sm"></div>
 						</a>
 					</li>
-					<li class="mr-3">
-						<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4"
-							href="#">
-							<div class="h-2 bg-gray-400 w-16 mt-2 block mx-auto rounded-sm"></div>
-						</a>
-					</li>
+					if context.User != nil {
+						<li class="mr-3">
+							<a class="inline-block w-8 h-8 overflow-hidden bg-gray-400 rounded-full" href="/auth/logout">
+							</a>
+						</li>
+					}
 				</ul>
 			</div>
 		</nav>

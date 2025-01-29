@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -108,4 +109,8 @@ func (c Configuration) NewLogger() zerolog.Logger {
 
 	return zerolog.New(output).Level(level).Hook(log.TracingHook{}).
 		With().Timestamp().Logger()
+}
+
+func (c Configuration) Secret() ([]byte, error) {
+	return hex.DecodeString("13d6b4dff8f84a10851021ec8608f814570d562c92fe6b5ec4c9f595bcb3234b")
 }
