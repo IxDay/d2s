@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	cache "github.com/IxDay/http-cache"
-	"github.com/IxDay/http-cache/adapter/memory"
 	"github.com/go-chi/chi/v5"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/mdobak/go-xerrors"
@@ -22,7 +20,6 @@ import (
 )
 
 var timeout = 30 * time.Second
-var ErrCache = xerrors.Message("failed to initialize cache")
 
 type Middleware = func(http.Handler) http.Handler
 
@@ -112,32 +109,9 @@ func WithNotFoundHandler(handler func(*Context)) ServerOption {
 	})
 }
 
-func newCache() (*cache.Client, error) {
-	adapter, err := memory.NewAdapter(
-		memory.AdapterWithAlgorithm(memory.LRU),
-		memory.AdapterWithCapacity(10000000),
-	)
-	if err != nil {
-		return nil, xerrors.New(ErrCache, err)
-	}
-
-	client, err := cache.NewClient(
-		cache.ClientWithAdapter(adapter),
-		cache.ClientWithTTL(10*time.Minute),
-		cache.ClientWithRefreshKey("opn"),
-		cache.ClientWithExpiresHeader(),
-		cache.ClientWithVary("Hx-Request"),
-	)
-	if err != nil {
-		return nil, xerrors.New(ErrCache, err)
-	}
-	return client, nil
-}
-
 type (
 	Server struct {
 		server       *http.Server
-		cache        *cache.Client
 		router       chi.Router
 		logger       log.Logger
 		errorHandler func(*Context, error)
@@ -155,12 +129,6 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	if config.errorHandler != nil {
 		errorHandler = config.errorHandler
 	}
-
-	cache, err := newCache()
-	if err != nil {
-		return nil, err
-	}
-
 	middlewares := []Middleware{MiddlewareUser(errorHandler),
 		MiddlewareMetrics, MiddlewareLogger(logger), MiddlewareRecover}
 
@@ -188,14 +156,12 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	return &Server{
 		server:       &http.Server{Addr: config.addr(), Handler: router},
 		router:       router.Route("/", func(r chi.Router) { r.Use(middlewares...) }),
-		cache:        cache,
 		logger:       logger,
 		errorHandler: errorHandler,
 	}, nil
 }
 
-func (s *Server) Handle(pattern string, handler Handler, opts ...HandlerOption) {
-	config := newHandlerConfig(opts)
+func (s *Server) Handle(pattern string, handler Handler, middlewares ...Middleware) {
 	var handlerStd http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r)
 		defer xerrors.Recover(func(err error) { s.errorHandler(ctx, err) })
@@ -203,19 +169,19 @@ func (s *Server) Handle(pattern string, handler Handler, opts ...HandlerOption) 
 			s.errorHandler(ctx, err)
 		}
 	})
-	if config.cache {
-		handlerStd = s.cache.Middleware(handlerStd)
+	s.HandleStd(pattern, handlerStd, middlewares...)
+}
+
+func (s *Server) HandleFunc(pattern string, handler HandlerFunc, middlewares ...Middleware) {
+	s.Handle(pattern, handler, middlewares...)
+}
+
+func (s *Server) HandleStd(pattern string, handler http.Handler, middlewares ...Middleware) {
+	if middlewares != nil {
+		s.router.With(middlewares...).Handle(pattern, handler)
+	} else {
+		s.router.Handle(pattern, handler)
 	}
-
-	s.router.Handle(pattern, handlerStd)
-}
-
-func (s *Server) HandleFunc(pattern string, handler HandlerFunc, opts ...HandlerOption) {
-	s.Handle(pattern, handler, opts...)
-}
-
-func (s *Server) HandleStd(pattern string, handler http.Handler) {
-	s.router.Handle(pattern, handler)
 }
 
 func (s *Server) Start() error {
@@ -244,31 +210,3 @@ func (s *Server) Start() error {
 	s.logger.Info().Msg("server stopped properly")
 	return nil
 }
-
-type handlerConfig struct {
-	cache bool
-}
-
-// ServerOption applies a configuration option value to a Server.
-type HandlerOption interface {
-	apply(handlerConfig) handlerConfig
-}
-
-type HandlerOptionFunc func(handlerConfig) handlerConfig
-
-func (fn HandlerOptionFunc) apply(c handlerConfig) handlerConfig {
-	return fn(c)
-}
-
-func newHandlerConfig(opts []HandlerOption) handlerConfig {
-	hc := handlerConfig{}
-	for _, opt := range opts {
-		hc = opt.apply(hc)
-	}
-	return hc
-}
-
-var WithCache = HandlerOptionFunc(func(hc handlerConfig) handlerConfig {
-	hc.cache = true
-	return hc
-})

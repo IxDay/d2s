@@ -41,6 +41,10 @@ func run(c *config.Configuration) error {
 	if err != nil {
 		return err
 	}
+	cache, err := server.MiddlewareCache()
+	if err != nil {
+		return err
+	}
 	server.InitCookieStore(secret)
 	logger := c.NewLogger()
 	logger.Debug().Object("config", c).Msg("dumping config")
@@ -67,7 +71,7 @@ func run(c *config.Configuration) error {
 		logger.Fatal().Msg("failed to instanciate server")
 	}
 	srv.HandleFunc("/", app.Index)
-	srv.HandleFunc("/lorem", lorem.Index, server.WithCache)
+	srv.HandleFunc("/lorem", lorem.Index, cache)
 	srv.HandleFunc("/panic", func(_ *server.Context) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")

@@ -3,7 +3,10 @@ package server
 import (
 	"errors"
 	"net/http"
+	"time"
 
+	cache "github.com/IxDay/http-cache"
+	"github.com/IxDay/http-cache/adapter/memory"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
 
@@ -42,6 +45,30 @@ func MiddlewareUser(errHandler func(*Context, error)) Middleware {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+var ErrCache = xerrors.Message("failed to initialize cache")
+
+func MiddlewareCache() (Middleware, error) {
+	adapter, err := memory.NewAdapter(
+		memory.AdapterWithAlgorithm(memory.LRU),
+		memory.AdapterWithCapacity(10000000),
+	)
+	if err != nil {
+		return nil, xerrors.New(ErrCache, err)
+	}
+
+	client, err := cache.NewClient(
+		cache.ClientWithAdapter(adapter),
+		cache.ClientWithTTL(10*time.Minute),
+		cache.ClientWithRefreshKey("opn"),
+		cache.ClientWithExpiresHeader(),
+		cache.ClientWithVary("Hx-Request"),
+	)
+	if err != nil {
+		return nil, xerrors.New(ErrCache, err)
+	}
+	return client.Middleware, nil
 }
 
 var MiddlewareLogger = log.Middleware
