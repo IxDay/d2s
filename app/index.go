@@ -19,6 +19,14 @@ type HTTPError struct {
 	Err  error
 }
 
+func New500HTTPError(err error) HTTPError {
+	return HTTPError{Code: http.StatusInternalServerError, Msg: "We encountered an issue", Err: err}
+}
+
+func New400HTTPError(err error) HTTPError {
+	return HTTPError{Code: http.StatusBadRequest, Msg: "The request provided is invalid", Err: err}
+}
+
 func (he HTTPError) Error() string { return he.Err.Error() }
 
 func (he HTTPError) Render(ctx *server.Context) {
@@ -33,7 +41,7 @@ func (he HTTPError) Render(ctx *server.Context) {
 }
 
 func ErrorHandler(ctx *server.Context, err error) {
-	errHTTP := HTTPError{Code: 500, Msg: "We encountered an issue", Err: err}
+	errHTTP := New500HTTPError(err)
 	if e, ok := err.(HTTPError); ok {
 		errHTTP = e
 	}

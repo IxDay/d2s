@@ -9,23 +9,27 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
+	"github.com/mdobak/go-xerrors"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/rs/zerolog"
 
+	"github.com/platipy-io/d2s/internal/github"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
+	"github.com/platipy-io/d2s/server"
 )
 
 type (
 	// Configuration hold the current fields to tune the application
 	Configuration struct {
-		Dev     Dev     `kong:"help='Activate dev mode',env='DEV'"`
-		Configs Configs `kong:"help='Path to a configuration file (can be repeated)',name='config',sep='none',type='path'" toml:"-"`
-		Host    string  `kong:"help='Host to listen to'"`
-		Port    int     `kong:"help='Port to listen to',default='8080'"`
-		Public  string  `kong:"help='Path to public directory',default='./public'"`
-		Logger  `kong:"embed=''" toml:"logger"`
-		Tracer  `kong:"-" toml:"tracer"`
+		Dev            Dev     `kong:"help='Activate dev mode',env='DEV'"`
+		Configs        Configs `kong:"help='Path to a configuration file (can be repeated)',name='config',sep='none',type='path'" toml:"-"`
+		Host           string  `kong:"help='Host to listen to'"`
+		Port           int     `kong:"help='Port to listen to',default='8080'"`
+		Public         string  `kong:"help='Path to public directory',default='./public'"`
+		Authentication `kong:"-" toml:"authentication"`
+		Logger         `kong:"embed=''" toml:"logger"`
+		Tracer         `kong:"-" toml:"tracer"`
 	}
 
 	Configs []string
@@ -42,6 +46,13 @@ type (
 	}
 	Level struct {
 		zerolog.Level
+	}
+
+	Authentication struct {
+		BypassToken  string `toml:"bypass-token"`
+		Redirect     string
+		ClientID     string `toml:"client-id"`
+		ClientSecret string `toml:"client-secret"`
 	}
 )
 
@@ -112,6 +123,28 @@ func (c Configuration) NewLogger() zerolog.Logger {
 		With().Timestamp().Logger()
 }
 
-func (c Configuration) Secret() ([]byte, error) {
-	return hex.DecodeString("13d6b4dff8f84a10851021ec8608f814570d562c92fe6b5ec4c9f595bcb3234b")
+func (c Configuration) InitCookie() error {
+	token, err := hex.DecodeString("13d6b4dff8f84a10851021ec8608f814570d562c92fe6b5ec4c9f595bcb3234b")
+	if err != nil {
+		return err
+	}
+	server.InitCookieStore(token)
+	return nil
+}
+
+var ErrBypass = xerrors.Message("bypass can only be used with dev mode")
+
+func (c Configuration) InitOAuth() error {
+	if c.Authentication.BypassToken != "" {
+		if c.Dev {
+			return github.InitBypass(c.BypassToken)
+		} else {
+			return ErrBypass
+		}
+	}
+	return github.InitOAuth(c.Redirect, c.ClientID, c.ClientSecret)
+}
+
+func (c Configuration) IsBypassAuth() bool {
+	return bool(c.Dev) && c.Authentication.BypassToken != ""
 }

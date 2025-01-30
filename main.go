@@ -55,15 +55,16 @@ func main() {
 }
 
 func run(c *config.Configuration) error {
-	secret, err := c.Secret()
-	if err != nil {
+	if err := c.InitCookie(); err != nil {
+		return err
+	}
+	if err := c.InitOAuth(); err != nil {
 		return err
 	}
 	cache, err := server.MiddlewareCache()
 	if err != nil {
 		return err
 	}
-	server.InitCookieStore(secret)
 	logger := c.NewLogger()
 	logger.Debug().Object("config", c).Msg("dumping config")
 
@@ -94,7 +95,12 @@ func run(c *config.Configuration) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")
 	})
-	srv.HandleFunc("/auth/login", app.LoginBypass)
+	if c.IsBypassAuth() {
+		srv.HandleFunc("/auth/login", app.LoginBypass)
+	} else {
+		srv.HandleFunc("/auth/login", app.Login)
+		srv.HandleFunc("/auth/callback", app.Callback)
+	}
 	srv.HandleFunc("/auth/logout", app.Logout)
 	srv.HandleFunc("/error", func(ctx *server.Context) error {
 		app.ErrorHandler(ctx, errors.New("something bad happened"))

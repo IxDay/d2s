@@ -8,6 +8,7 @@ require (
 	github.com/alecthomas/kong v1.6.0
 	github.com/bokwoon95/sq v0.5.1
 	github.com/go-chi/chi/v5 v5.1.0
+	github.com/google/go-github/v68 v68.0.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/mdobak/go-xerrors v0.3.1
 	github.com/pelletier/go-toml/v2 v2.2.2
@@ -18,6 +19,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.30.0
 	go.opentelemetry.io/otel/sdk v1.30.0
 	go.opentelemetry.io/otel/trace v1.30.0
+	golang.org/x/oauth2 v0.22.0
 )
 
 replace github.com/alecthomas/kong v1.6.0 => github.com/IxDay/kong v0.0.0-20241230074355-a49575b9d4ab
@@ -30,6 +32,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
