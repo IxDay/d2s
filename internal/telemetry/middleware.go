@@ -4,7 +4,6 @@ package telemetry
 // Port https://github.com/zbindenren/negroni-prometheus for chi router
 import (
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -72,7 +71,20 @@ func MiddlewareMetrics() func(next http.Handler) http.Handler {
 				ww = middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			}
 			next.ServeHTTP(ww, r)
-			labels := []string{strconv.Itoa(ww.Status()), r.Method, pattern(r)}
+
+			labels := []string{r.Method, pattern(r)}
+			switch status := ww.Status(); {
+			case status < 200:
+				labels = append(labels, "1XX")
+			case status < 300:
+				labels = append(labels, "2XX")
+			case status < 400:
+				labels = append(labels, "3XX")
+			case status < 500:
+				labels = append(labels, "4XX")
+			default:
+				labels = append(labels, "5XX")
+			}
 
 			reqs.WithLabelValues(labels...).Inc()
 			latency.WithLabelValues(labels...).Observe(float64(time.Since(start).Nanoseconds()) / 1000000)
