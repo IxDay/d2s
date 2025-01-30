@@ -2,10 +2,14 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"io/fs"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/alecthomas/kong"
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/platipy-io/d2s/app"
 	"github.com/platipy-io/d2s/app/lorem"
@@ -21,8 +25,22 @@ var (
 	Name              = "d2s"
 )
 
+func exit(step string, err error) {
+	fmt.Printf("failed to %s configuration file (%s): %s\n",
+		step, DefaultConfigPath, err)
+	os.Exit(1)
+}
+
 func main() {
 	conf := &config.Configuration{}
+	file, err := os.Open(DefaultConfigPath)
+	if err == nil {
+		if err := toml.NewDecoder(file).Decode(conf); err != nil {
+			exit("unmarshal", err)
+		}
+	} else if !errors.Is(err, fs.ErrExist) {
+		exit("read", err)
+	}
 
 	ctx := kong.Parse(conf,
 		kong.Name(Name),
