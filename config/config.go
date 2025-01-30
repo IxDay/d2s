@@ -23,6 +23,7 @@ type (
 		Configs Configs `kong:"help='Path to a configuration file (can be repeated)',name='config',sep='none',type='path'" toml:"-"`
 		Host    string  `kong:"help='Host to listen to'"`
 		Port    int     `kong:"help='Port to listen to',default='8080'"`
+		Public  string  `kong:"help='Path to public directory',default='./public'"`
 		Logger  `kong:"embed=''" toml:"logger"`
 		Tracer  `kong:"-" toml:"tracer"`
 	}

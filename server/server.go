@@ -214,6 +214,10 @@ func (s *Server) HandleFunc(pattern string, handler HandlerFunc, opts ...Handler
 	s.Handle(pattern, handler, opts...)
 }
 
+func (s *Server) HandleStd(pattern string, handler http.Handler) {
+	s.router.Handle(pattern, handler)
+}
+
 func (s *Server) Start() error {
 	errChan := make(chan error)
 

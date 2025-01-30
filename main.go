@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -84,5 +85,6 @@ func run(c *config.Configuration) error {
 		return nil
 	})
 
+	srv.HandleStd("/*", http.FileServer(http.Dir(c.Public)))
 	return srv.Start()
 }
