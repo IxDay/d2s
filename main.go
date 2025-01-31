@@ -89,24 +89,25 @@ func run(c *config.Configuration) error {
 	if err != nil {
 		logger.Fatal().Msg("failed to instanciate server")
 	}
-	srv.HandleFunc("/", app.Index)
-	srv.HandleFunc("/lorem", lorem.Index, cache)
-	srv.HandleFunc("/panic", func(_ *server.Context) error {
+	base := srv.With(server.MiddlewareUser(app.ErrorHandler))
+	base.HandleFunc("/", app.Index)
+	base.HandleFunc("/lorem", lorem.Index, cache)
+	base.HandleFunc("/panic", func(_ *server.Context) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")
 	})
 	if c.IsBypassAuth() {
-		srv.HandleFunc("/auth/login", app.LoginBypass)
+		base.HandleFunc("/auth/login", app.LoginBypass)
 	} else {
-		srv.HandleFunc("/auth/login", app.Login)
-		srv.HandleFunc("/auth/callback", app.Callback)
+		base.HandleFunc("/auth/login", app.Login)
+		base.HandleFunc("/auth/callback", app.Callback)
 	}
-	srv.HandleFunc("/auth/logout", app.Logout)
-	srv.HandleFunc("/error", func(ctx *server.Context) error {
+	base.HandleFunc("/auth/logout", app.Logout)
+	base.HandleFunc("/error", func(ctx *server.Context) error {
 		app.ErrorHandler(ctx, errors.New("something bad happened"))
 		return nil
 	})
-	srv.HandleFunc("/wait", func(ctx *server.Context) error {
+	base.HandleFunc("/wait", func(ctx *server.Context) error {
 		ctx.ResponseWriter.Write([]byte("starting wait\n"))
 		time.Sleep(10 * time.Second)
 		ctx.ResponseWriter.Write([]byte("ending wait\n"))

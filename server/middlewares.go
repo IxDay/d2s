@@ -38,6 +38,7 @@ func MiddlewareUser(errHandler func(*Context, error)) Middleware {
 			case errors.Is(err, ErrInvalidValue):
 				// maybe 400
 				errHandler(NewContext(w, r), err)
+				return
 			default:
 				ctx := r.Context()
 				log.Ctx(ctx).Error().Ctx(ctx).Err(err).Msg("uncaught error")

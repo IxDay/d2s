@@ -124,13 +124,11 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	router := chi.NewRouter()
 	logger := config.logger
 	notFoundHandler := defaultNotFoundHandler
-
 	errorHandler := defaultErrorHandler
-	if config.errorHandler != nil {
-		errorHandler = config.errorHandler
+
+	middlewares := []Middleware{
+		MiddlewareMetrics, MiddlewareLogger(logger), MiddlewareRecover,
 	}
-	middlewares := []Middleware{MiddlewareUser(errorHandler),
-		MiddlewareMetrics, MiddlewareLogger(logger), MiddlewareRecover}
 
 	if config.tracerProvider != nil {
 		tracerMiddleware := MiddlewareOpenTelemetry("server",
@@ -138,6 +136,10 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		endpoint := config.tracerProvider.Endpoint()
 		health.AddReadinessCheck("tracer", healthcheck.TCPDialCheck(endpoint, 5*time.Second))
 		middlewares = append([]Middleware{tracerMiddleware}, middlewares...)
+	}
+
+	if config.errorHandler != nil {
+		errorHandler = config.errorHandler
 	}
 
 	if config.notFoundHandler != nil {
@@ -182,6 +184,11 @@ func (s *Server) HandleStd(pattern string, handler http.Handler, middlewares ...
 	} else {
 		s.router.Handle(pattern, handler)
 	}
+}
+
+func (s *Server) With(middlewares ...Middleware) *Server {
+	return &Server{server: s.server, router: s.router.With(middlewares...),
+		logger: s.logger, errorHandler: s.errorHandler}
 }
 
 func (s *Server) Start() error {
