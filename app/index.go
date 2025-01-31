@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	"github.com/platipy-io/d2s/internal/github"
 	"github.com/platipy-io/d2s/server"
 )
 
@@ -10,7 +11,14 @@ func Index(ctx *server.Context) error {
 	span := ctx.NewSpan("index")
 	defer span.End()
 	defer ctx.LogWrapper("index endpoint")()
-	return ctx.Render(BaseTplt(ctx, IndexTplt(ctx, nil)))
+	if ctx.User == nil {
+		return ctx.Render(BaseTplt(ctx, IndexTplt(nil, nil)))
+	}
+	repos, err := github.Starred(ctx.Context(), ctx.User)
+	if err != nil {
+		return err
+	}
+	return ctx.Render(BaseTplt(ctx, IndexTplt(repos, nil)))
 }
 
 type HTTPError struct {

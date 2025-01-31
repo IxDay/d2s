@@ -38,3 +38,26 @@ func User(ctx context.Context, token string) (*types.User, error) {
 	}
 	return types.NewUser(user.GetName(), user.GetEmail(), token), nil
 }
+
+var ErrStarred = xerrors.Message("Github API starred listing failed")
+
+func Starred(ctx context.Context, user *types.User) ([]*types.Repository, error) {
+	opts := github.ActivityListStarredOptions{ListOptions: github.ListOptions{}}
+	starred, _, err := NewClient(user.Token).c.Activity.ListStarred(ctx, "", &opts)
+	if err != nil {
+		return nil, xerrors.WithWrapper(ErrStarred, err)
+	}
+	repos := make([]*types.Repository, len(starred))
+	for i, repo := range starred {
+		r := types.Repository{
+			ID:          *repo.Repository.ID,
+			Owner:       *repo.Repository.Owner.Login,
+			Name:        *repo.Repository.Name,
+			Description: *repo.Repository.Description,
+			Language:    *repo.Repository.Language,
+			LastUpdated: repo.Repository.UpdatedAt.Time,
+		}
+		repos[i] = &r
+	}
+	return repos, nil
+}

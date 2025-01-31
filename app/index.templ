@@ -2,7 +2,8 @@ package app
 
 import (
 	"github.com/platipy-io/d2s/internal/log"
-	"github.com/platipy-io/d2s/server"
+	"github.com/platipy-io/d2s/types"
+	"github.com/xeonx/timeago"
 )
 
 templ githubBtn(path string) {
@@ -18,10 +19,34 @@ templ githubBtn(path string) {
 	</a>
 }
 
-templ IndexTplt(context *server.Context, wrapped templ.Component) {
+templ IndexTplt(repos []*types.Repository, wrapped templ.Component) {
 	{{ defer log.FnWrapperCtx(ctx, "index rendering")() }}
 	<div>
 		<section class="container mx-auto flex md:px-24 md:py-10 md:flex-row flex-col items-center">
+			if repos != nil {
+				<ul role="list" class="divide-y divide-gray-100 w-full">
+					for _, repo := range repos {
+						<li class="flex justify-between gap-x-6 py-5">
+						<div class="flex min-w-0 gap-x-4">
+							<div class="min-w-0 flex-auto">
+								<a class="text-sm/6 font-semibold text-gray-900" href="https://github.com/foo/bar">{repo.Owner}/{repo.Name}</a>
+								<p class="mt-1 truncate text-xs/5 text-gray-500">
+								{repo.Description}
+								</p>
+							</div>
+						</div>
+						<div class="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+<div class="mt-1 flex items-center gap-x-1.5">
+								<div class="flex-none rounded-full bg-emerald-500 p-1.5">
+								</div>
+							<p class="text-sm/6 text-gray-900">{repo.Language}</p>
+							</div>
+								<p class="text-xs/5 text-gray-500">{timeago.NoMax(timeago.English).Format(repo.LastUpdated)}</p>
+						</div>
+					</li>
+					}
+				</ul>
+			} else {
 			<div
 				class="lg:flex-grow mt-5 md:mt-0   md:w-1.5/2 lg:pr-24 md:pr-16 flex flex-col md:items-start md:text-left mb-16 md:mb-0 items-center text-center h-[14rem]">
 				<h1 class="h-12 bg-gray-500 w-3/6 block rounded-sm mb-3"></h1>
@@ -38,7 +63,7 @@ templ IndexTplt(context *server.Context, wrapped templ.Component) {
 						<a hx-get="/error" hx-push-url="true" hx-swap="outerHTML"  hx-target="#wrapped"
 							href="/error" class="inline-flex rounded-sm h-11 w-[8rem] ml-4 px-4 bg-orange-200 hover:bg-orange-300"></a>
 					</div>
-					if context.User == nil {
+					if repos == nil {
 						<div class="mt-4">
 							@githubBtn("/auth/login")
 						</div>
@@ -47,6 +72,7 @@ templ IndexTplt(context *server.Context, wrapped templ.Component) {
 				}
 			</div>
 			<div class="lg:max-w-lg lg:w-full mb-5 md:mb-0 md:w-1/2 w-3/6 h-[32rem] bg-gray-200 rounded-md"></div>
+			}
 		</section>
 	</div>
 }

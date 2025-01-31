@@ -14,6 +14,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rs/zerolog v1.33.0
+	github.com/xeonx/timeago v1.0.0-rc5
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0
 	go.opentelemetry.io/otel v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.30.0
