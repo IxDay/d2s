@@ -39,18 +39,14 @@ templ header(context *server.Context) {
 					<img src="/logo.png" class="object-scale-down h-10"/>
 				</a>
 			</div>
-
-
-			<div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
-				<ul class="list-reset lg:flex justify-end flex-1 items-center">
-					if context.User != nil {
-						<li class="mr-3">
-							<a class="inline-block align-middle w-10 h-10 overflow-hidden bg-gray-400 rounded-full" href="/auth/logout">
-							</a>
-						</li>
-					}
-				</ul>
-			</div>
+			<ul class="list-reset flex justify-end flex-1 items-center">
+				if context.User != nil {
+					<li class="mr-3">
+						<a class="inline-block align-middle w-10 h-10 overflow-hidden bg-gray-400 rounded-full" href="/auth/logout">
+						</a>
+					</li>
+				}
+			</ul>
 		</nav>
 	</header>
 }
