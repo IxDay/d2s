@@ -24,7 +24,10 @@ templ BaseTplt(context *server.Context, body templ.Component) {
 	<body>
 		/* https://www.creative-tim.com/twcomponents/component/wireframe */
 		@header(context)
-		<main class="bg-slate-50 min-h-screen" hx-on::before-swap="handleError(this, event)">@body</main>
+		<main class="bg-slate-50 min-h-screen" hx-on::before-swap="handleError(this, event)">
+		<div id="alerts" class="absolute right-10 top-5 w-80"></div>
+		@body
+		</main>
 	</body>
 	</html>
 }

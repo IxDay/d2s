@@ -59,7 +59,7 @@ templ IndexTplt(repos []*types.Repository, wrapped templ.Component) {
 					<div class="flex justify-center" id="wrapped">
 						<a hx-get="/lorem" hx-push-url="true" hx-swap="outerHTML" hx-target="#wrapped"
 							class="inline-flex rounded-sm h-11 w-48 px-4 bg-green-300 hover:bg-green-400" href="#"></a>
-						<a href="/#" class="inline-flex rounded-sm h-11 w-[8rem] ml-4 px-4 bg-gray-200 hover:bg-gray-300"></a>
+						<button hx-get="/alert" class="inline-flex rounded-sm h-11 w-[8rem] ml-4 px-4 bg-gray-200 hover:bg-gray-300"></button>
 						<a hx-get="/error" hx-push-url="true" hx-swap="outerHTML"  hx-target="#wrapped"
 							href="/error" class="inline-flex rounded-sm h-11 w-[8rem] ml-4 px-4 bg-orange-200 hover:bg-orange-300"></a>
 					</div>

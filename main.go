@@ -92,6 +92,7 @@ func run(c *config.Configuration) error {
 	base := srv.With(server.MiddlewareUser(app.ErrorHandler))
 	base.HandleFunc("/", app.Index)
 	base.HandleFunc("/lorem", lorem.Index, cache)
+	base.HandleFunc("/alert", app.Alert)
 	base.HandleFunc("/panic", func(_ *server.Context) error {
 		// w.Write([]byte("I'm about to panic!")) // this will send a response 200 as we write to resp
 		panic("some unknown reason")
