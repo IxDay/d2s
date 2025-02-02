@@ -33,6 +33,7 @@ We are actively developing D2S, and here’s a snapshot of what's included and w
 - [ ] DB connection + Routing + Rendering (the basic hello world feature)
 	- [x] Application leverage HTMX to demo partial loading when navigating between pages.
 	- [x] Live reloading on code changes
+	- [ ] Traduction
 - [x] 12 factor app:
 	- [x] Configuration is loaded as follow:
 		```
@@ -55,6 +56,7 @@ We are actively developing D2S, and here’s a snapshot of what's included and w
 	- [x] Tracing
 - [x] Caching
 - [ ] Security
+	- [ ] CSRF
 - [ ] CI/CD
 	- [ ] Image build with caching
 	- [x] Additional file format checks (`editorconfig`, `shellcheck`)
