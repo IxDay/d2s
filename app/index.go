@@ -21,6 +21,10 @@ func Index(ctx *server.Context) error {
 	return ctx.Render(BaseTplt(ctx, IndexTplt(repos, nil)))
 }
 
+func IndexPost(ctx *server.Context) error {
+	return ctx.Render(NewToastSuccess("Change saved"))
+}
+
 type HTTPError struct {
 	Code int
 	Msg  string

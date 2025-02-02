@@ -20,6 +20,18 @@ type Toast struct {
 	Kind    toast
 }
 
+func NewToastSuccess(msg string) templ.Component {
+	return ToastTplt(Toast{Message: msg, Kind: ToastSuccess})
+}
+
+func NewToastWarning(msg string) templ.Component {
+	return ToastTplt(Toast{Message: msg, Kind: ToastWarning})
+}
+
+func NewToastDanger(msg string) templ.Component {
+	return ToastTplt(Toast{Message: msg, Kind: ToastDanger})
+}
+
 func NewAlertSuccess(msg string) templ.Component {
 	return AlertTplt(Toast{Message: msg, Kind: ToastSuccess})
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/types"
 	"github.com/xeonx/timeago"
+	"strconv"
 )
 
 templ githubBtn(path string) {
@@ -19,33 +20,63 @@ templ githubBtn(path string) {
 	</a>
 }
 
+templ IndexRepos(repos []*types.Repository) {
+	<!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+	<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+	<script>
+		htmx.onLoad(function (content) {
+			if (content != document.body) return // load is fired everytime something is injected in the page
+			var sortable = content.querySelector("#repos");
+			var sortableInstance = new Sortable(sortable, {
+				animation: 150,
+				// Disable sorting on the `end` event
+				onEnd: function (evt) { this.option("disabled", true); }
+			});
+
+			// Re-enable sorting on the `htmx:afterSwap` event
+			sortable.parentNode.addEventListener("htmx:afterSwap", function () {
+				sortableInstance.option("disabled", false);
+			});
+		})
+	</script>
+	<form class="relative sortable w-full divide-y divide-gray-100" hx-post="/" hx-trigger="end" hx-swap="afterbegin" hx-target="#toasts">
+		<div class="htmx-indicator">Updating...</div>
+	<div id="toasts" class="absolute w-full">
+	</div>
+	<ul role="list" class="divide-y divide-gray-100 w-full" id="repos">
+		for _, repo := range repos {
+			<li class="flex justify-between gap-x-6 py-5">
+				<input type="hidden" name="item" value={strconv.FormatInt(repo.ID, 10)}/>
+				<div class="flex min-w-0 gap-x-4">
+					<div class="min-w-0 flex-auto">
+						<a class="text-sm/6 font-semibold text-gray-900"
+							href="https://github.com/foo/bar">{repo.Owner}/{repo.Name}</a>
+						<p class="mt-1 truncate text-xs/5 text-gray-500">
+							{repo.Description}
+						</p>
+					</div>
+				</div>
+				<div class="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+					<div class="mt-1 flex items-center gap-x-1.5">
+						<div class="flex-none rounded-full bg-emerald-500 p-1.5">
+						</div>
+						<p class="text-sm/6 text-gray-900">{repo.Language}</p>
+					</div>
+					<p class="text-xs/5 text-gray-500">{timeago.NoMax(timeago.English).Format(repo.LastUpdated)}</p>
+				</div>
+		</li>
+		}
+	</ul>
+	</form>
+}
+
 templ IndexTplt(repos []*types.Repository, wrapped templ.Component) {
 	{{ defer log.FnWrapperCtx(ctx, "index rendering")() }}
+
 	<div>
 		<section class="container mx-auto flex md:px-24 md:py-10 md:flex-row flex-col items-center">
 			if repos != nil {
-				<ul role="list" class="divide-y divide-gray-100 w-full">
-					for _, repo := range repos {
-						<li class="flex justify-between gap-x-6 py-5">
-						<div class="flex min-w-0 gap-x-4">
-							<div class="min-w-0 flex-auto">
-								<a class="text-sm/6 font-semibold text-gray-900" href="https://github.com/foo/bar">{repo.Owner}/{repo.Name}</a>
-								<p class="mt-1 truncate text-xs/5 text-gray-500">
-								{repo.Description}
-								</p>
-							</div>
-						</div>
-						<div class="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
-<div class="mt-1 flex items-center gap-x-1.5">
-								<div class="flex-none rounded-full bg-emerald-500 p-1.5">
-								</div>
-							<p class="text-sm/6 text-gray-900">{repo.Language}</p>
-							</div>
-								<p class="text-xs/5 text-gray-500">{timeago.NoMax(timeago.English).Format(repo.LastUpdated)}</p>
-						</div>
-					</li>
-					}
-				</ul>
+				@IndexRepos(repos)
 			} else {
 			<div
 				class="lg:flex-grow mt-5 md:mt-0   md:w-1.5/2 lg:pr-24 md:pr-16 flex flex-col md:items-start md:text-left mb-16 md:mb-0 items-center text-center h-[14rem]">

@@ -90,7 +90,8 @@ func run(c *config.Configuration) error {
 		logger.Fatal().Msg("failed to instanciate server")
 	}
 	base := srv.With(server.MiddlewareUser(app.ErrorHandler))
-	base.HandleFunc("/", app.Index)
+	base.Get("/", app.Index)
+	base.Post("/", app.IndexPost)
 	base.HandleFunc("/lorem", lorem.Index, cache)
 	base.HandleFunc("/alert", app.Alert)
 	base.HandleFunc("/panic", func(_ *server.Context) error {
