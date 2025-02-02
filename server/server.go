@@ -163,15 +163,18 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	}, nil
 }
 
-func (s *Server) Handle(pattern string, handler Handler, middlewares ...Middleware) {
-	var handlerStd http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (s *Server) stdHandler(handler Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r)
 		defer xerrors.Recover(func(err error) { s.errorHandler(ctx, err) })
 		if err := handler.Handle(ctx); err != nil {
 			s.errorHandler(ctx, err)
 		}
-	})
-	s.HandleStd(pattern, handlerStd, middlewares...)
+	}
+}
+
+func (s *Server) Handle(pattern string, handler Handler, middlewares ...Middleware) {
+	s.HandleStd(pattern, http.HandlerFunc(s.stdHandler(handler)), middlewares...)
 }
 
 func (s *Server) HandleFunc(pattern string, handler HandlerFunc, middlewares ...Middleware) {
@@ -189,6 +192,14 @@ func (s *Server) HandleStd(pattern string, handler http.Handler, middlewares ...
 func (s *Server) With(middlewares ...Middleware) *Server {
 	return &Server{server: s.server, router: s.router.With(middlewares...),
 		logger: s.logger, errorHandler: s.errorHandler}
+}
+
+func (s *Server) Get(pattern string, handler HandlerFunc) {
+	s.router.Get(pattern, s.stdHandler(handler))
+}
+
+func (s *Server) Post(pattern string, handler HandlerFunc) {
+	s.router.Post(pattern, s.stdHandler(handler))
 }
 
 func (s *Server) Start() error {
