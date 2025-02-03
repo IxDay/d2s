@@ -65,6 +65,10 @@ func run(c *config.Configuration) error {
 	if err != nil {
 		return err
 	}
+	db, err := c.NewClient()
+	if err != nil {
+		return err
+	}
 	logger := c.NewLogger()
 	logger.Debug().Object("config", c).Msg("dumping config")
 
@@ -74,6 +78,7 @@ func run(c *config.Configuration) error {
 		server.WithPort(c.Port),
 		server.WithErrorHandler(app.ErrorHandler),
 		server.WithNotFoundHandler(app.NotFoundHandler),
+		server.WithDatabase(db),
 	}
 	if c.Tracer.Enabled {
 		provider, err := telemetry.NewTracerProvider(
@@ -87,7 +92,7 @@ func run(c *config.Configuration) error {
 
 	srv, err := server.NewServer(opts...)
 	if err != nil {
-		logger.Fatal().Msg("failed to instanciate server")
+		logger.Fatal().Stack().Err(err).Msg("failed to instanciate server")
 	}
 	base := srv.With(server.MiddlewareUser(app.ErrorHandler))
 	base.Get("/", app.Index)

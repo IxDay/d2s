@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
+	"github.com/platipy-io/d2s/data"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
 )
@@ -27,6 +28,7 @@ type serverConfig struct {
 	host            string
 	port            int
 	logger          log.Logger
+	database        *data.DB
 	tracerProvider  *telemetry.TracerProvider
 	errorHandler    func(*Context, error)
 	notFoundHandler func(*Context)
@@ -109,14 +111,24 @@ func WithNotFoundHandler(handler func(*Context)) ServerOption {
 	})
 }
 
+func WithDatabase(database *data.DB) ServerOption {
+	return ServerOptionFunc(func(sc serverConfig) serverConfig {
+		sc.database = database
+		return sc
+	})
+}
+
 type (
 	Server struct {
 		server       *http.Server
 		router       chi.Router
 		logger       log.Logger
+		database     *data.DB
 		errorHandler func(*Context, error)
 	}
 )
+
+var ErrDatabaseNotProvided = xerrors.Message("database not provided")
 
 func NewServer(opts ...ServerOption) (*Server, error) {
 	health := healthcheck.NewHandler()
@@ -146,6 +158,10 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		notFoundHandler = config.notFoundHandler
 	}
 
+	if config.database == nil {
+		return nil, ErrDatabaseNotProvided
+	}
+
 	router.HandleFunc("/live", health.LiveEndpoint)
 	router.HandleFunc("/ready", health.ReadyEndpoint)
 	router.Handle("/metrics", promhttp.Handler())
@@ -160,12 +176,14 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		router:       router.Route("/", func(r chi.Router) { r.Use(middlewares...) }),
 		logger:       logger,
 		errorHandler: errorHandler,
+		database:     config.database,
 	}, nil
 }
 
 func (s *Server) stdHandler(handler Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r)
+		ctx.DB = s.database
 		defer xerrors.Recover(func(err error) { s.errorHandler(ctx, err) })
 		if err := handler.Handle(ctx); err != nil {
 			s.errorHandler(ctx, err)
@@ -191,7 +209,7 @@ func (s *Server) HandleStd(pattern string, handler http.Handler, middlewares ...
 
 func (s *Server) With(middlewares ...Middleware) *Server {
 	return &Server{server: s.server, router: s.router.With(middlewares...),
-		logger: s.logger, errorHandler: s.errorHandler}
+		logger: s.logger, errorHandler: s.errorHandler, database: s.database}
 }
 
 func (s *Server) Get(pattern string, handler HandlerFunc) {

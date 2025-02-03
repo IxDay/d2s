@@ -14,6 +14,7 @@ func (c Configuration) MarshalZerologObject(e *zerolog.Event) {
 	e.Object("logger", c.Logger)
 	e.Object("tracer", c.Tracer)
 	e.Object("authentication", c.Authentication)
+	e.Object("database", c.Database)
 }
 
 func (l Logger) MarshalZerologObject(e *zerolog.Event) {
@@ -53,4 +54,8 @@ func (a Authentication) MarshalZerologObject(e *zerolog.Event) {
 	} else {
 		e.Str("bypass-token", "<unset>")
 	}
+}
+
+func (d Database) MarshalZerologObject(e *zerolog.Event) {
+	e.Str("path", d.Path)
 }

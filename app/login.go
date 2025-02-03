@@ -49,6 +49,9 @@ func LoginBypass(ctx *server.Context) error {
 	if err != nil {
 		return New500HTTPError(err)
 	}
+	if err := ctx.DB.SaveUser(user); err != nil {
+		return New500HTTPError(err)
+	}
 	ctx.User = user
 	if err := ctx.SetUser(); err != nil {
 		return New500HTTPError(err)
@@ -73,6 +76,9 @@ func Callback(ctx *server.Context) error {
 	}
 	user, err := github.User(ctx.Context(), token)
 	if err != nil {
+		return New500HTTPError(err)
+	}
+	if err := ctx.DB.SaveUser(user); err != nil {
 		return New500HTTPError(err)
 	}
 	ctx.User = user

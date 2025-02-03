@@ -3,8 +3,8 @@ CREATE TABLE users (
 	id INTEGER PRIMARY KEY,
 	email TEXT DEFAULT '' NOT NULL,
 	name TEXT DEFAULT '' NOT NULL,
-	password TEXT DEFAULT '' NOT NULL,
-	verified BOOLEAN DEFAULT FALSE NOT NULL
+	created DATETIME,
+	UNIQUE(email)
 );
 
 CREATE UNIQUE INDEX `idx_email__users` ON `users` (`email`) WHERE `email` != '';

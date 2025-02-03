@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/platipy-io/d2s/data"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
 	"github.com/platipy-io/d2s/types"
@@ -15,6 +16,7 @@ type Context struct {
 	log.Logger
 	*types.User
 	*http.Request
+	DB *data.DB
 	http.ResponseWriter
 }
 

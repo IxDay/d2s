@@ -13,6 +13,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"github.com/rs/zerolog"
 
+	"github.com/platipy-io/d2s/data"
 	"github.com/platipy-io/d2s/internal/github"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/internal/telemetry"
@@ -30,6 +31,7 @@ type (
 		Authentication `kong:"-" toml:"authentication"`
 		Logger         `kong:"embed=''" toml:"logger"`
 		Tracer         `kong:"-" toml:"tracer"`
+		Database       `kong:"-" toml:"database"`
 	}
 
 	Configs []string
@@ -46,6 +48,10 @@ type (
 	}
 	Level struct {
 		zerolog.Level
+	}
+
+	Database struct {
+		Path string `toml:"path"`
 	}
 
 	Authentication struct {
@@ -147,4 +153,8 @@ func (c Configuration) InitOAuth() error {
 
 func (c Configuration) IsBypassAuth() bool {
 	return bool(c.Dev) && c.Authentication.BypassToken != ""
+}
+
+func (d Database) NewClient() (*data.DB, error) {
+	return data.NewDB(d.Path)
 }

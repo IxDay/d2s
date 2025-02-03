@@ -50,6 +50,11 @@ task :doc do
   sh "godoc -http=localhost:6060 -play -index -v"
 end
 
+desc "Generate table structures in data package"
+task :"generate:table" do
+  sh "sqddl tables -db './data/d2s.db' -pkg data  -file data/tables.go"
+end
+
 desc "Clean up generated files"
 task :clean do
   walk("out") do |entry|

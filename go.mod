@@ -10,6 +10,7 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/mdobak/go-xerrors v0.3.1
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/prometheus/client_golang v1.20.5
