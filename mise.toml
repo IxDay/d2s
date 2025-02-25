@@ -1,0 +1,15 @@
+[tools]
+"go" = "1.23"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.1"
+"go:github.com/a-h/templ/cmd/templ" = "v0.2"
+"aqua:air-verse/air" = "1.61"
+"aqua:IxDay/mruby" = "3.3.0"
+"aqua:editorconfig-checker/editorconfig-checker" = "v3.0.3"
+"go:github.com/bokwoon95/sqddl" = "0.4.16"
+"go:golang.org/x/tools/cmd/godoc" = "0.29"
+"go:github.com/go-delve/delve/cmd/dlv" = "1.24"
+
+[env]
+# https://templ.guide/syntax-and-usage/raw-go
+TEMPL_EXPERIMENT = "rawgo"
+
