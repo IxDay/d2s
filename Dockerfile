@@ -1,6 +1,7 @@
 FROM alpine:3.20 AS build
 
-RUN apk add --no-cache go
+RUN apk add --no-cache go gcc musl-dev
+
 WORKDIR /mnt
 ENV PATH="/root/go/bin/:$PATH"
 RUN go install github.com/a-h/templ/cmd/templ@v0.2.778

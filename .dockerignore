@@ -3,6 +3,9 @@
 /app/**/*_templ.go
 !/internal/
 !/config/
+!/server/
+!/data/
+!/types/
 !go.mod
 !go.sum
 !main.go
