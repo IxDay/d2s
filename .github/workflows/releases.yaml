@@ -1,10 +1,10 @@
-name: release
+name: releases
 on:
   push:
     tags:
       - 'v*.*.*'
 jobs:
-  release:
+  binary:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 8
@@ -42,3 +42,28 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: d2s-*
+
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/ixday/d2s
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ghcr.io/ixday/d2s:latest,ghcr.io/ixday/d2s:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/ixday/d2s:latest
+          cache-to: type=registry,ref=ghcr.io/ixday/d2s:latest,mode=max
