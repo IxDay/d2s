@@ -12,7 +12,7 @@ task :"test:editorconfig" do
 end
 
 desc "Run vulnerability checks"
-task :"test:vulnerability" do
+task "test:vulnerability": %i[generate] do
   sh "govulncheck ./..."
 end
 
