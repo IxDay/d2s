@@ -55,11 +55,16 @@ func main() {
 }
 
 func run(c *config.Configuration) error {
+	logger := c.NewLogger()
+	logger.Debug().Object("config", c).Msg("dumping config")
+
 	if err := c.InitCookie(); err != nil {
 		return err
 	}
 	if err := c.InitOAuth(); err != nil {
 		return err
+	} else if c.IsBypassAuth() {
+		logger.Warn().Msg("authentication bypass activated")
 	}
 	cache, err := server.MiddlewareCache()
 	if err != nil {
@@ -69,8 +74,6 @@ func run(c *config.Configuration) error {
 	if err != nil {
 		return err
 	}
-	logger := c.NewLogger()
-	logger.Debug().Object("config", c).Msg("dumping config")
 
 	opts := []server.ServerOption{
 		server.WithLogger(logger),
