@@ -40,6 +40,27 @@ rule "_templ.go" => ".templ" do |t|
   sh "templ generate -f #{t.prerequisites.first}"
 end
 
+_color_file = File.join('internal', 'github', 'colors.go')
+
+desc "Generate github language - color association"
+task :"generate:colors" => [_color_file]
+task _color_file do |t|
+  puts "generate #{_color_file}"
+  https = SimpleHttp.new('https', 'raw.githubusercontent.com')
+  resp = https.get('/github-linguist/linguist/refs/heads/main/lib/linguist/languages.yml')
+  cb = ->(entry) { '"' + entry.first + '": "' + entry.last['color'] + '"' rescue nil }
+  File.open(t.name, File::CREAT | File::TRUNC | File::WRONLY).write(<<~EOF
+      package github
+
+      var Colors = map[string]string{
+      \t#{YAML.load(resp.body).map(&cb).compact.join(",\n\t") + ","}
+      }
+    EOF
+  )
+  puts "gofmt -l -w #{_color_file}"
+  `gofmt -l -w #{_color_file}`
+end
+
 desc "Watch source code and rebuild/reload"
 task :watch do
   sh "air --build.bin #{build_file} --tmp_dir #{File.dirname(build_file.to_s)}"
@@ -57,6 +78,8 @@ end
 
 desc "Clean up generated files"
 task :clean do
+
+  (puts "rm #{_color_file}") && File.delete(_color_file) if File.exists?(_color_file)
   walk("out") do |entry|
     puts "rm #{entry}"
     File.directory?(entry) ? Dir.delete(entry) : File.delete(entry)

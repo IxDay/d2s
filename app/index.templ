@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/platipy-io/d2s/internal/github"
 	"github.com/platipy-io/d2s/internal/log"
 	"github.com/platipy-io/d2s/types"
 	"github.com/xeonx/timeago"
@@ -58,9 +59,9 @@ templ IndexRepos(repos []*types.Repository) {
 				</div>
 				<div class="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
 					<div class="mt-1 flex items-center gap-x-1.5">
-						<div class="flex-none rounded-full bg-emerald-500 p-1.5">
-						</div>
 						<p class="text-sm/6 text-gray-900">{repo.Language}</p>
+						<div class={"flex-none rounded-full  p-1.5 bg-[" + github.Colors[repo.Language] + "]"}>
+						</div>
 					</div>
 					<p class="text-xs/5 text-gray-500">{timeago.NoMax(timeago.English).Format(repo.LastUpdated)}</p>
 				</div>
