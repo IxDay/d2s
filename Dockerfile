@@ -1,19 +1,23 @@
 FROM alpine:3.20 AS build
 
-RUN apk add --no-cache go gcc musl-dev
+RUN apk add --no-cache go gcc musl-dev git
 
 WORKDIR /mnt
 ENV PATH="/root/go/bin/:$PATH"
-RUN go install github.com/a-h/templ/cmd/templ@v0.2.778
+COPY mise.toml /mnt/
+RUN wget -O- https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
+	&& mise settings experimental=true \
+	&& mise trust \
+	# https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
+	&& CGO_CFLAGS="-D_LARGEFILE64_SOURCE" mise install
 
 # take advantage of cache for go dependencies
-COPY go.mod go.sum /mnt/
+COPY go.mod go.sum ./
 RUN go mod download
 
 # now copy sources and build, check .dockerignore for files not included
 COPY . .
-RUN TEMPL_EXPERIMENT=rawgo templ generate
-RUN go build -ldflags '-s -w -X main.DefaultConfigPath=/etc/d2s/base.toml' -o d2s main.go
+RUN mise exec -- mrake build:dist
 
 FROM alpine:3.20
 
