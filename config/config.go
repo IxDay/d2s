@@ -72,11 +72,7 @@ func (l *Level) Decode(ctx *kong.DecodeContext) (err error) {
 func (c *Configs) BeforeResolve(ctx *kong.Context, trace *kong.Path, config *Configuration) error {
 	configs := ctx.FlagValue(trace.Flag).(Configs)
 	for _, file := range configs {
-		if content, err := os.ReadFile(file); errors.Is(err, os.ErrNotExist) {
-			fmt.Printf("config file: %s not found, skipping...\n", file)
-		} else if err != nil {
-			return err
-		} else if err := toml.Unmarshal(content, config); err != nil {
+		if err := config.ParseFile(file); err != nil {
 			return err
 		}
 	}
