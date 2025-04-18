@@ -2,14 +2,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/pelletier/go-toml/v2"
 
 	"github.com/platipy-io/d2s/app"
 	"github.com/platipy-io/d2s/app/lorem"
@@ -21,26 +18,13 @@ import (
 var (
 	// DefaultConfigPath is the default location the application will use to
 	// find the configuration.
-	DefaultConfigPath = "d2s.toml"
-	Name              = "d2s"
+	DefaultConfigPath     = "d2s.toml"
+	EnvironmentConfigPath = "PLATIPY_CONFIG"
+	Name                  = "d2s"
 )
-
-func exit(step string, err error) {
-	fmt.Printf("failed to %s configuration file (%s): %s\n",
-		step, DefaultConfigPath, err)
-	os.Exit(1)
-}
 
 func main() {
 	conf := &config.Configuration{}
-	file, err := os.Open(DefaultConfigPath)
-	if err == nil {
-		if err := toml.NewDecoder(file).Decode(conf); err != nil {
-			exit("unmarshal", err)
-		}
-	} else if !errors.Is(err, fs.ErrExist) {
-		exit("read", err)
-	}
 
 	ctx := kong.Parse(conf,
 		kong.Name(Name),
@@ -49,7 +33,19 @@ func main() {
 		kong.Bind(conf),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
-		}))
+		}),
+		kong.WithBeforeResolve(func() error {
+			if err := conf.ParseFile(DefaultConfigPath); err != nil {
+				return err
+			}
+			if path := os.Getenv(EnvironmentConfigPath); path != "" {
+				if err := conf.ParseFile(path); err != nil {
+					return err
+				}
+			}
+			return nil
+		}),
+	)
 
 	ctx.FatalIfErrorf(run(conf))
 }

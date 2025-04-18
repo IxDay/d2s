@@ -147,6 +147,18 @@ func (c Configuration) InitOAuth() error {
 	return github.InitOAuth(c.Redirect, c.ClientID, c.ClientSecret)
 }
 
+func (c *Configuration) ParseFile(path string) error {
+	fmt.Println("reading", path)
+	if content, err := os.ReadFile(path); errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("config file: %s not found, skipping...\n", path)
+	} else if err != nil {
+		return xerrors.New("config file: ", path, "failed reading", err)
+	} else if err := toml.Unmarshal(content, c); err != nil {
+		return xerrors.New("config file: ", path, "failed parsing", err)
+	}
+	return nil
+}
+
 func (c Configuration) IsBypassAuth() bool {
 	return bool(c.Dev) && c.Authentication.BypassToken != ""
 }

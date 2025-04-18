@@ -1,7 +1,7 @@
 github.com/IxDay/http-cache v0.0.0-20241023144724-63962ba79e1d h1:CAEXHpP7dII2dRGTGSN8iiB5NuH1Y1dsvZMqqrBK2yY=
 github.com/IxDay/http-cache v0.0.0-20241023144724-63962ba79e1d/go.mod h1:Uv1mTLz0NLnjNoIPHX8dExdVeNOQzlC8ZaT2Kxi74VE=
-github.com/IxDay/kong v0.0.0-20241230074355-a49575b9d4ab h1:xVZ6K49RLoDHWWtOZEN5FRL+evusymNKthvD2ZFA7fM=
-github.com/IxDay/kong v0.0.0-20241230074355-a49575b9d4ab/go.mod h1:p2vqieVMeTAnaC83txKtXe8FLke2X07aruPWXyMPQrU=
+github.com/IxDay/kong v0.0.0-20250418121315-48550555dbea h1:iqDBBVMZYNgBzXPydoCk3SlXxPMlzpXgtC9jj1KVlOQ=
+github.com/IxDay/kong v0.0.0-20250418121315-48550555dbea/go.mod h1:p2vqieVMeTAnaC83txKtXe8FLke2X07aruPWXyMPQrU=
 github.com/a-h/templ v0.2.793 h1:Io+/ocnfGWYO4VHdR0zBbf39PQlnzVCVVD+wEEs6/qY=
 github.com/a-h/templ v0.2.793/go.mod h1:lq48JXoUvuQrU0VThrK31yFwdRjTCnIE5bcPCM9IP1w=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=

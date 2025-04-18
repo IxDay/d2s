@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/IxDay/http-cache v0.0.0-20241023144724-63962ba79e1d
 	github.com/a-h/templ v0.2.793
-	github.com/alecthomas/kong v1.6.0
+	github.com/alecthomas/kong v1.10.0
 	github.com/bokwoon95/sq v0.5.1
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/google/go-github/v68 v68.0.0
@@ -24,7 +24,9 @@ require (
 	golang.org/x/oauth2 v0.22.0
 )
 
-replace github.com/alecthomas/kong v1.6.0 => github.com/IxDay/kong v0.0.0-20241230074355-a49575b9d4ab
+// go mod edit -replace github.com/alecthomas/kong=github.com/IxDay/kong@master
+// go mod tidy
+replace github.com/alecthomas/kong => github.com/IxDay/kong v0.0.0-20250418121315-48550555dbea
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
